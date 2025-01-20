@@ -1,0 +1,12 @@
+{
+  "terminate": {
+    "rule": "count",
+    "max_nodes": 20,
+    "max_depth": 6
+  },
+  "expand": {
+    "max_children": 3,
+    "constant": 2
+  },
+  "simulation": 20
+}

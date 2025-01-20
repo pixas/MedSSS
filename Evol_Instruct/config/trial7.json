@@ -1,0 +1,33 @@
+{
+    "terminate": {
+      "rule": "count",
+      "max_nodes": 50,
+      "max_depth": 6
+    },
+    "expand": {
+      "max_children": 3,
+      "test_max_children": 6,
+      "constant": 2,
+      "low_gate": 0.5,
+      "bear_ratio": 0.9,
+      "refine_start_depth": 5,
+      "answer_refine_try": 3,
+      "autostep": 80,
+      "actions": ["Reason", "Finish"]
+    },
+    "simulation": 20,
+    "gpu_usage": 0.6,
+    "few_shot": 1,
+    "Medrag": {
+      "db_dir": "/mnt/hwfile/medai/liaoyusheng/datas/medcorps",
+      "retriever_name": "BM25",
+      "corpus_name": "MedCorp",
+      "retriever_args": {
+        "k": 5,
+        "rrf_k": 100,
+        "context_length": 2048
+      }
+    },
+    "debug": false,
+    "update_rule": "comp"
+  }

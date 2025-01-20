@@ -1,5 +1,5 @@
 BASE_PATH=<parent_dir_of_checkpoints>
-TASK_PATH=<evaluation_sets_path>
+TASK_PATH=evaluation_data
 
 domains=("MedQA_cot" "medsins_task16" "medsins_task29" "medsins_task130" "medsins_task131" "MedMCQA_cot" "med_mmlu_cot" "pubmedqa_c_cot" "bioasq" "pubhealth" "biomrc")
 

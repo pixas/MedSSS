@@ -75,9 +75,10 @@ You can access the detailed step-by-step solution in [HF link](https://huggingfa
 
 ## 🚀 Self-Evolve Pipeline
 For automatic generation of data, fine-tuning of policy and PRM and evaluation, we integrate them to `scripts/iter_run_mcts_mixdata_prm.sh`.
-The only think you need to do is to change `BASE_PATH` and `TASK_PATH` to your actual paths in Line9 and Line12.
+The only think you need to do is to change `BASE_PATH` and `TASK_PATH` to your actual paths in Line9 and Line12. 
 
-Remember to change the corresponding paths in the three scripts under the `scripts/eval/` folder as well as `scripts/train/sft_lora_r16_iter.sh`
+
+Remember to change the corresponding paths in the three scripts under the `scripts/eval/` folder as well as `scripts/train/sft_lora_r16_iter.sh`.
 
 
 ## 🧐 Only Evaluation
@@ -86,7 +87,7 @@ If we want to directly evaluate MedS$^3$ in the downstream tasks, you can run th
 sbatch scripts/slurm/generate_parallel_peft_batch_med.sh $task_path $model_base $model_path medsss $logs_path $dataset scvm 16 1 0 None None None "${model_path} ${prm_path}" prm-min-vote-sum 
 ```
 where 
-- `task_path`: the parent dir of the evlauation file
+- `task_path`: the parent dir of the evlauation file, which can be directly set to `evaluation_data`
 - `model_base`: `meta-llama/Llama-3.1-8B-Instruct`
 - `model_path`: the local folder of `pixas/MedSSS_Policy`
 - `logs_path`: the log dir of this evaluation

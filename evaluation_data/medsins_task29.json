@@ -1,0 +1,393 @@
+[
+  {
+    "id": "drug_dose_0",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: METHODS: Growth retardation was observed in six severely asthmatic children after introduction of high-dose fluticasone propionate treatment (dry powder).\nDrug:  fluticasone propionate"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is high."
+      }
+    ],
+    "eval": {
+      "answer": "high"
+    },
+    "answer_idx": "high"
+  },
+  {
+    "id": "drug_dose_1",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: Two case reports of bilateral granulomatous anterior uveitis are described in patients with open angle glaucoma treated with metripranolol 0.6% eye drops.\nDrug:  metripranolol"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 0.6."
+      }
+    ],
+    "eval": {
+      "answer": "0.6"
+    },
+    "answer_idx": "0.6"
+  },
+  {
+    "id": "drug_dose_2",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: This case suggests that acyclovir when given intravenously in doses of 10 mg/kg may result in increased serum lithium concentrations.\nDrug:  acyclovir"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 10 mg/kg."
+      }
+    ],
+    "eval": {
+      "answer": "10 mg/kg"
+    },
+    "answer_idx": "10 mg/kg"
+  },
+  {
+    "id": "drug_dose_3",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: This case suggests that acyclovir when given intravenously in doses of 10 mg/kg may result in increased serum lithium concentrations.\nDrug:  lithium"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 10 mg/kg."
+      }
+    ],
+    "eval": {
+      "answer": "10 mg/kg"
+    },
+    "answer_idx": "10 mg/kg"
+  },
+  {
+    "id": "drug_dose_4",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: We describe 2 patients with cutaneous lupus erythematosus who developed severe dapsone reaction after low dose therapy, with a fatal outcome in one.\nDrug:  dapsone"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is low."
+      }
+    ],
+    "eval": {
+      "answer": "low"
+    },
+    "answer_idx": "low"
+  },
+  {
+    "id": "drug_dose_5",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: A 17-year-old female patient who had been taking oral minocycline (50 mg twice daily) for 3 weeks for acne developed an eruption that progressed to an exfoliative dermatitis.\nDrug:  minocycline"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 50 mg twice daily."
+      }
+    ],
+    "eval": {
+      "answer": "50 mg twice daily"
+    },
+    "answer_idx": "50 mg twice daily"
+  },
+  {
+    "id": "drug_dose_6",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: Overdose of magnesium sulfate in combination with renal insufficiency, hypocalcemia, or compromise of intestinal integrity may predispose horses to magnesium toxicosis.\nDrug:  magnesium"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is Overdose."
+      }
+    ],
+    "eval": {
+      "answer": "Overdose"
+    },
+    "answer_idx": "Overdose"
+  },
+  {
+    "id": "drug_dose_7",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: Overdose of magnesium sulfate in combination with renal insufficiency, hypocalcemia, or compromise of intestinal integrity may predispose horses to magnesium toxicosis.\nDrug:  magnesium sulfate"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is Overdose."
+      }
+    ],
+    "eval": {
+      "answer": "Overdose"
+    },
+    "answer_idx": "Overdose"
+  },
+  {
+    "id": "drug_dose_8",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: We thus concluded that an excessive dose of AZ had probably destroyed the gastric mucosal barrier or thrombocytopenia due to bone marrow disorder and thus eventually led to the development of hemorrhagic gastritis.\nDrug:  AZ"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is excessive."
+      }
+    ],
+    "eval": {
+      "answer": "excessive"
+    },
+    "answer_idx": "excessive"
+  },
+  {
+    "id": "drug_dose_9",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: On the next day, after a total dose of only 600 mg of danazol, gingival bleeding and purpura occurred.\nDrug:  danazol"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 600 mg."
+      }
+    ],
+    "eval": {
+      "answer": "600 mg"
+    },
+    "answer_idx": "600 mg"
+  },
+  {
+    "id": "drug_dose_10",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: We reported 3 patients who developed acute generalized dystonia and akinetic rigid syndrome following an initial therapy with d-penicillamine 125-500 mg daily.\nDrug:  d-penicillamine"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 125-500 mg daily."
+      }
+    ],
+    "eval": {
+      "answer": "125-500 mg daily"
+    },
+    "answer_idx": "125-500 mg daily"
+  },
+  {
+    "id": "drug_dose_11",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: Ballistic movements due to ischemic infarcts after intravenous heroin overdose: report of two cases.\nDrug:  heroin"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is overdose."
+      }
+    ],
+    "eval": {
+      "answer": "overdose"
+    },
+    "answer_idx": "overdose"
+  },
+  {
+    "id": "drug_dose_12",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: Two heroin addicts, aged 34 and 19 years, developed ballistic movements after intravenous heroin overdose.\nDrug:  heroin"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is overdose."
+      }
+    ],
+    "eval": {
+      "answer": "overdose"
+    },
+    "answer_idx": "overdose"
+  },
+  {
+    "id": "drug_dose_13",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: We report a 76-year-old man who developed an acute blistering eruption following high-dose penicillin treatment for pneumococcal septicaemia.\nDrug:  penicillin"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is high."
+      }
+    ],
+    "eval": {
+      "answer": "high"
+    },
+    "answer_idx": "high"
+  },
+  {
+    "id": "drug_dose_14",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: In case 1, a total daily dose of 25 mg sertraline, with nondetectable sertraline and desmethylsertraline blood levels, resulted in a doubling of the lamotrigine blood level with symptoms of toxicity.\nDrug:  desmethylsertraline"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 25 mg."
+      }
+    ],
+    "eval": {
+      "answer": "25 mg"
+    },
+    "answer_idx": "25 mg"
+  },
+  {
+    "id": "drug_dose_15",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: In case 1, a total daily dose of 25 mg sertraline, with nondetectable sertraline and desmethylsertraline blood levels, resulted in a doubling of the lamotrigine blood level with symptoms of toxicity.\nDrug:  lamotrigine"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 25 mg."
+      }
+    ],
+    "eval": {
+      "answer": "25 mg"
+    },
+    "answer_idx": "25 mg"
+  },
+  {
+    "id": "drug_dose_16",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: We report a case of pancytopenia in a 23-year-old man with Crohn's disease who was treated with 5-aminosalicylic acid (Pentasa; Nisshin, Tokyo, Japan) 3.0 g/day.\nDrug:  5-aminosalicylic acid"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 3.0 g/day."
+      }
+    ],
+    "eval": {
+      "answer": "3.0 g/day"
+    },
+    "answer_idx": "3.0 g/day"
+  },
+  {
+    "id": "drug_dose_17",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: We report a case of pancytopenia in a 23-year-old man with Crohn's disease who was treated with 5-aminosalicylic acid (Pentasa; Nisshin, Tokyo, Japan) 3.0 g/day.\nDrug:  Pentasa"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 3.0 g/day."
+      }
+    ],
+    "eval": {
+      "answer": "3.0 g/day"
+    },
+    "answer_idx": "3.0 g/day"
+  },
+  {
+    "id": "drug_dose_18",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: 1. Changes in the plasma cortisol level were reported in a male patient with panic disorder during the period of low-dose alprazolam treatment (mean 0.62 +/- 0.15 mg/day) compared with during the period of high-dose period (mean 1.08 +/- 0.28 mg/day).\nDrug:  alprazolam"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is low."
+      }
+    ],
+    "eval": {
+      "answer": "low"
+    },
+    "answer_idx": "low"
+  },
+  {
+    "id": "drug_dose_19",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: We report on three patients with acute schizophrenia, who developed severe akathisia during treatment with olanzapine (20-25 mg/d).\nDrug:  olanzapine"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 20-25 mg/d."
+      }
+    ],
+    "eval": {
+      "answer": "20-25 mg/d"
+    },
+    "answer_idx": "20-25 mg/d"
+  },
+  {
+    "id": "drug_dose_20",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: A 65-year-old woman with angina pectoris presented with syncope after sublingual ingestion of isosorbide dinitrate (5 mg).\nDrug:  isosorbide dinitrate"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 5 mg."
+      }
+    ],
+    "eval": {
+      "answer": "5 mg"
+    },
+    "answer_idx": "5 mg"
+  },
+  {
+    "id": "drug_dose_21",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: In a postural challenge test after administration of isosorbide dinitrate (5 mg), blood pressure decreased from 120/67 to 65/35 mmHg, followed by syncope with a sudden decrease in pulse rate from 85 to 60 beats/min.\nDrug:  isosorbide dinitrate"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is 5 mg."
+      }
+    ],
+    "eval": {
+      "answer": "5 mg"
+    },
+    "answer_idx": "5 mg"
+  },
+  {
+    "id": "drug_dose_22",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "In this task, you will be given sentences and a drug name in which your task is to indicate the doses of intake of that particular drug mentioned in the sentence. A dose refers to a specified amount of medication taken at one time. You just need to extract the texts that indicate the does of the drug.\nSentence: High-dose phosphate treatment leads to hypokalemia in hypophosphatemic osteomalacia.\nDrug:  phosphate"
+      },
+      {
+        "from": "gpt",
+        "value": "The answer is High."
+      }
+    ],
+    "eval": {
+      "answer": "High"
+    },
+    "answer_idx": "High"
+  }
+]
