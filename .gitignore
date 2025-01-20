@@ -1,0 +1,6 @@
+batchscript*
+*.jsonl
+*.json 
+wandb/
+slurm-1*
+logs/

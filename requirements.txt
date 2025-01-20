@@ -1,0 +1,4 @@
+sentence_transformers
+bs4
+faiss-gpu
+transformers==4.44.0
