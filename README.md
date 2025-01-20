@@ -1,7 +1,9 @@
 # MedSSS
-Towards Medical Small Language Models with Self-Evolved Slow Thinking 
 
-## Code and Models
+<p align="center">
+📃 <a href="" target="_blank">Paper</a> ｜🤗 <a href="https://huggingface.co/pixas/MedSSS_Policy" target="_blank">MedSSS-8B-Policy</a> ｜🤗 <a href="https://huggingface.co/pixas/MedSSS_PRM" target="_blank">MedSSS-8B-PRM</a> | 📚 <a href="https://huggingface.co/datasets/pixas/MedSSS-data" target="_blank">SFT/PRM Data</a>
+</p>
 
-Policy Model: [Policy](https://huggingface.co/pixas/MedSSS_Policy)
-PRM Model: [PRM](https://huggingface.co/pixas/MedSSS_PRM)
+
+## Introduction
+This 
