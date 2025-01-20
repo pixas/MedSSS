@@ -11,7 +11,7 @@ BASE_PATH=<checkpoint_parent_dir>
 # oss_path=${BASE_PATH}/oss/datasets/medical_train
 TASK_PATH=${BASE_PATH}/oss/datasets/medical_train
 
-MODEL_PATH=meta-llama/Llama3.1-8B-Instruct
+MODEL_PATH=meta-llama/Llama-3.1-8B-Instruct
 CKPT=llama3.1-8b-r16a32-1epoch
 
 

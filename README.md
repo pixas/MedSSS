@@ -34,7 +34,7 @@ We open-sourced our models, data, and code here.
 
 - **Deploy**
 
-As the policy model and the PRM model are both LoRA adapters, you can deploy them with the same backbone `meta-llama/Llama3.1-8B-Instruct`.
+As the policy model and the PRM model are both LoRA adapters, you can deploy them with the same backbone `meta-llama/Llama-3.1-8B-Instruct`.
 Specifically, for policy model:
 
 ```python
@@ -87,7 +87,7 @@ sbatch scripts/slurm/generate_parallel_peft_batch_med.sh $task_path $model_base 
 ```
 where 
 - `task_path`: the parent dir of the evlauation file
-- `model_base`: `meta-llama/Llama3.1-8B-Instruct`
+- `model_base`: `meta-llama/Llama-3.1-8B-Instruct`
 - `model_path`: the local folder of `pixas/MedSSS_Policy`
 - `logs_path`: the log dir of this evaluation
 - `dataset`: one of the 11 datasets, which can refer to `domains=("MedQA_cot" "medsins_task16" "medsins_task29" "medsins_task130" "medsins_task131" "MedMCQA_cot" "med_mmlu_cot" "pubmedqa_c_cot" "bioasq" "pubhealth" "biomrc")`
