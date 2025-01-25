@@ -87,7 +87,7 @@ If we want to directly evaluate MedS$^3$ in the downstream tasks, you can run th
 sbatch scripts/slurm/generate_parallel_peft_batch_med.sh $task_path $model_base $model_path medsss $logs_path $dataset scvm 16 1 0 None None None "${model_path} ${prm_path}" prm-min-vote-sum 
 ```
 where 
-- `task_path`: the parent dir of the evlauation file, which can be directly set to `evaluation_data`
+- `task_path`: the parent dir of the evaluation file, which can be directly set to `evaluation_data`
 - `model_base`: `meta-llama/Llama-3.1-8B-Instruct`
 - `model_path`: the local folder of `pixas/MedSSS_Policy`
 - `logs_path`: the log dir of this evaluation
