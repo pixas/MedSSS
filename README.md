@@ -22,7 +22,7 @@ It is built with the following three steps
 
 We open-sourced our models, data, and code here.
 
-**We have updated the training method, models, and papers. The models here are old-fashioned. We will update them as soon as possible.**
+**We are updating the training method, models, and the paper. The models here are old-fashioned. We will update them as soon as possible.**
 
 
 
