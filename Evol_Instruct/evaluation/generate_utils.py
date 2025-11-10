@@ -22,20 +22,14 @@ task_specific_prompt_mapping = {
     'PLE_TCM_cot': "\n\n请在回答的最后用以下格式回答：答案为{answer}。",
     'math': "\n\nPlease format the final answer at the end of the response as:  The answer is {answer}.",
     'math_500': "\n\nPlease format the final answer at the end of the response as:  The answer is {answer}.",
-    'winogrande': "\n\nPlease answer with option letter directly, do not output other infomation."
+    'winogrande': "\n\nPlease answer with option letter directly, do not output other infomation.",
+    # "medcalc": "Do not round the final answer to a specific number of decimal places, just output the final answer as it is.",
 }
 
 def get_fewshot_examples(dataset_name, num_samples=3):
-    dataset = dataset_name.split("_")[0]
-    mapping = {
-        "bbh": "ming/eval/fewshot_examples/bbh_prompt_cot/example.txt",
-        "svamp": "ming/eval/fewshot_examples/svamp_prompt_cot/example.txt",
-        "math": "ming/eval/fewshot_examples/math_prompt_cot/example.txt",
-        "commonsense": "ming/eval/fewshot_examples/commonsense_qa_prompt_cot/example.txt",
-        "logiqa": "ming/eval/fewshot_examples/logiqa_en_prompt_cot/example.txt",
-        "mmlu": "ming/eval/fewshot_examples/mmlu_prompt_cot/example.txt",
-        "mmedbench": "ming/eval/fewshot_examples/mmedbench_en_prompt_cot/example.txt"
-    }
+    from Evol_Instruct.prompts.few_shot_prompt import prompt_mapping
+    dataset = dataset_name
+    
     samples = {
         "mmlu": 3,
         "commonsense": 1,
@@ -43,20 +37,24 @@ def get_fewshot_examples(dataset_name, num_samples=3):
         "mmedbench": 10,
         "svamp": 10
     }
-    if dataset in mapping:
+    if dataset in prompt_mapping:
         print("Loading few shot examples...")
-        few_shot_prompt = open(mapping[dataset], 'r').read()
-        each_examples = few_shot_prompt.split("Problem: ")
-        few_shot_prompt = "Problem: ".join(each_examples[:samples[dataset]])
-        print(few_shot_prompt, flush=True)
+        few_shot_prompt = prompt_mapping[dataset][:num_samples]
+        few_shot_prompt_str = ""
+        for each in few_shot_prompt:
+            few_shot_prompt_str += f"Problem: {each['problem']}\n\nResponse: {each['answer']}\n\n"
+        # few_shot_prompt = open(mapping[dataset], 'r').read()
+        # each_examples = few_shot_prompt.split("Problem: ")
+        # few_shot_prompt = "Problem: ".join(each_examples[:samples[dataset]])
+        print(few_shot_prompt_str, flush=True)
     else:
-        few_shot_prompt = "Please directly answer with the answer letter.\n"
-    return few_shot_prompt
+        few_shot_prompt_str = "Please directly answer with the answer letter.\n"
+    return few_shot_prompt_str
     # pass
     
 class CustomDataset:
     def __init__(self, questions, batch_size, task_specific_prompt, dataset_name='default', tokenizer=None,
-                 is_base=False, add_few_shot=False, num_samples=3):
+                 is_base=False, add_few_shot=False, num_samples=1):
         self.questions = questions
         self.batch_size = batch_size
         self.size = len(questions)
@@ -69,8 +67,9 @@ class CustomDataset:
         ]
         self.tokenizer = tokenizer
         self.is_base = is_base
-        # print(add_few_shot, flush=True)
+
         if add_few_shot: 
+
             self.few_shot_samples = get_fewshot_examples(self.dataset_name, num_samples)
         else:
             self.few_shot_samples = ""
@@ -82,11 +81,7 @@ class CustomDataset:
     def __getitem__(self, index):
         bz = self.batch_size
         items = []
-        # return question, ansewr, additional info
-        # questions = []
-        # prompts = []
-        # answers = []
-        # additional_infos = []
+
         for i in range(index*bz, (index+1)*bz):
             if i < self.size:
                 # conv = self.conv.copy()
@@ -120,7 +115,7 @@ class CustomDataset:
                             question = self.few_shot_samples  + "Problem: " + question + "\n\nAnswer:"
                     else:
                         if self.few_shot_samples != "":
-                            question = self.few_shot_samples + "Problem: " + question + "\n\nAnswer: "
+                            question = self.few_shot_samples + "Problem: " + question
                         else:
                             question = question 
 
@@ -128,10 +123,7 @@ class CustomDataset:
                     alpaca_item['conversations'][0]['value'] = question
                     item = AlpacaTaskItem(alpaca_item, self.task_specific_prompt)
                     items.append(item)
-                    # answers.append(line['conversations'][1]['value'] if len(line['conversations']) > 1 else None)
-                    # additional_infos.append(line['eval'] if 'eval' in line else None)
-
-        # input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt')
+                    
         return items
 
     def __len__(self):
@@ -180,7 +172,9 @@ def set_tokenizer(tokenizer):
         tokenizer.pad_token = tokenizer.unk_token
     else:
         # tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.pad_token = "<|finetune_right_pad_id|>"
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+            # tokenizer.pad_token = "<|finetune_right_pad_id|>"
     return tokenizer
 
 

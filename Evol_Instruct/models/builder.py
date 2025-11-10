@@ -28,18 +28,12 @@ from Evol_Instruct.models.vllm_support import VLLMServer
 
 
 
-def load_pretrained_model(model_path, model_base, model_name, args, load_8bit=False, load_4bit=False, use_logit_bias=False, device_map="auto", device="cuda"):
-    # unload_ffn = getattr(args, "unload_ffn", False)
-    # return_base = getattr(args, "return_base", False)
-    # unload_attn = getattr(args, "unload_attn", False)
+def load_pretrained_model(model_path, model_base, model_name, args, load_8bit=False, load_4bit=False, device_map="auto", device="cuda"):
+
 
     alpha = getattr(args, "alpha", None)
 
 
-    if alpha == '':
-        alpha = None
-    if alpha is not None:
-        alpha = int(alpha)
     kwargs = {"device_map": device_map}
 
     if device != "cuda":
@@ -72,7 +66,6 @@ def load_pretrained_model(model_path, model_base, model_name, args, load_8bit=Fa
     else:
         server = VLLMServer(None, model_path, None, offline=True, gpu_memory_usage=args.gpu_memory_usage, max_model_len=max_model_len)
 
-    # tokenizer = server.tokenizer
 
 
         

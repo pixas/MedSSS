@@ -152,22 +152,7 @@ def process_dataset(args, data):
     new_data = []
     config = client.read(args.config)
     config = MCTSConfig(config)
-    few_shot = config.few_shot 
-    # if few_shot > 0:
-    #     data = data[few_shot:]
-    if "-" in args.sample_num and args.sample_num != "-1":
-        # can be parsed to a range
-        start_idx, end_idx = args.sample_num.split("-")
-        start_idx = int(start_idx)
-        end_idx = int(end_idx)
-        data = data[start_idx:end_idx]
-    else:
-        # args.sample_num = int(args.samle_num)
-        sample_num = int(args.sample_num)
-        if sample_num != -1:
-            start_idx = (args.iter - 1) * sample_num
-            end_idx = args.iter * sample_num
-            data = data[start_idx:end_idx]
+
     
     # probe whether there exists a os.path.dirname(args.output_path)/sft_combined_{iter}.json
     # if so, read the data, and filter those already processed
@@ -276,7 +261,6 @@ def process_dataset(args, data):
     
     for idx in trange(0, len(data), args.batch_size):
         items = data[idx:idx+args.batch_size]
-        # 
         try:
             output = mcts_generate(args, server, items, config=config, value_function=value_model,)
         
@@ -296,7 +280,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_path', type=str, default=None)
     parser.add_argument('--output_path', type=str)
     parser.add_argument('--value_output_path', type=str, default=None)
-    parser.add_argument('--sample_num', type=str, default="-1")
+
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--num_chunks', type=int, default=1)

@@ -1,8 +1,10 @@
 import pathlib
+import re
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM
 from dataclasses import dataclass, field
 from datasets import Dataset
+from Evol_Instruct.MCTS.utils import extract_template
 from Evol_Instruct.training.value_train import print_on_main
 from trl import (
     ModelConfig,
@@ -37,6 +39,8 @@ class SFTScriptArguments(ScriptArguments):
     tuned_lora_path: list[str] = field(metadata={"nargs": "+", "help": "Path to the lora-tuned model."}, default_factory=list)
     
     learn_advantage: bool = field(metadata={"help": "only learn the trace where the next step possesses higher value than last step."}, default=False)
+    filter_extreme: int = field(metadata={"help": "learn how many trajectories for samples with no negative trajs"}, default=-1)
+    remain_highest: int = field(metadata={"help": "keep how many highest value responses"}, default=-1)
     
     
 def return_prompt_and_responses(samples):
@@ -108,7 +112,7 @@ def format_tree_data(samples, data_usage, learn_advantage, tokenizer):
 
     return new_list
 
-def obtain_dataset(data_path, learn_advantage, tokenizer):
+def obtain_dataset(data_path, learn_advantage, script_args):
     data = client.read(data_path)
     if 'mcts' in data_path:
         new_data = []
@@ -117,14 +121,14 @@ def obtain_dataset(data_path, learn_advantage, tokenizer):
             category = 'pos'
             # if only_max_value:
             responses = []
-
+            
             for term in item[category]:
                 if isinstance(term[0], str):
                     response = term[0]
                     value = 1
                 else:
-                    response = "\n\n".join([f"Step {i}: " + step['step'] for i, step in enumerate(term)])
-                    value = sum([step['value'] for step in term])
+                    response = "\n\n".join([f"Step {i}: " + step[0] for i, step in enumerate(term[0])])
+                    value = min([step[1] for step in term[0][1:]])
 
                 
                 responses.append((response, value))
@@ -132,6 +136,14 @@ def obtain_dataset(data_path, learn_advantage, tokenizer):
             #     responses = sorted(responses, key=lambda x: x[1], reverse=True)[:keep_largest_value]
             #     responses = [response for response, value in responses]
             # else:
+            if script_args.filter_extreme != -1:
+                if len(item['neg']) == 0:
+                    # select the highest `script_args.filter_extreme` value responses
+                    responses = sorted(responses, key=lambda x: x[1], reverse=True)[:script_args.filter_extreme]
+                    if not responses:
+                        continue
+            if script_args.remain_highest != -1:
+                responses = sorted(responses, key=lambda x: x[1], reverse=True)[:script_args.remain_highest]
             responses = [response for response, value in responses]
 
                 
@@ -143,7 +155,53 @@ def obtain_dataset(data_path, learn_advantage, tokenizer):
                         {"from": "gpt", "value": response}
                     ],
                     "label": 1.0,
+                    "inter": True if term == 'inter' else False
                 })
+        data_list = return_prompt_and_responses(new_data)
+    elif "o3-mini" in data_path:
+        new_data = []
+        wrong_cnt = 0
+        for sample in data: 
+            answer_idx = sample['eval']['answer_idx']
+            answer = sample['eval']['answer']
+            for response in sample['gpt_responses']:
+                response = response.strip()
+                predict_answer = extract_template(response, r"(?:[a-z]+ )?answer")
+
+                if predict_answer is None:
+                    predict_answer = extract_template(response, 'correct answer') 
+                if predict_answer is None:
+                    predict_answer = extract_template(response, 'final answer') 
+                if predict_answer is None:
+                    save = False
+                else:
+                    predict_answer = predict_answer.strip().rstrip(".").strip("{").strip("}").split("answer")[-1]
+                    predict_answer = predict_answer.strip(":").replace("}}", "").strip().strip(".").strip('"').strip("'")
+                    save = False
+                    
+                    if len(predict_answer) == 1 and predict_answer == answer_idx:
+                        save = True
+                    if re.match( r'^[A-D]\.\s.*', predict_answer) and predict_answer[0] == answer_idx:
+                        save = True
+                    elif len(predict_answer) != 1 and all(each.lower() in [x.lower() for x in predict_answer.split(" ")] for each in answer.split(" ")):
+                        save = True
+                    elif len(predict_answer) != 1 and predict_answer.lower() in answer.lower():
+                        save = True
+                if save:
+                    each_line_split = response.split("\n\n")
+                    new_response = "\n\n".join(each_line_split[:-1]) + f"\n\nThe answer is {answer_idx}."
+                    new_data.append({
+                        "id": sample['id'],
+                        "conversations": [
+                            {"from": "human", "value": sample['input']},
+                            {"from": "gpt", "value": new_response}
+                        ],
+                    })
+                else:
+                    wrong_cnt += 1
+                
+        print_on_main(f"There are {wrong_cnt} wrong responses generated by o3-mini")
+          
         data_list = return_prompt_and_responses(new_data)
     else:
         data_list = return_prompt_and_responses(data)
@@ -204,14 +262,14 @@ if __name__ == "__main__":
         trust_remote_code=model_config.trust_remote_code,
         # use_fast=True,
     )
-    rank0_print(f"Loading {model_config.model_name_or_path} over...")
+    print_on_main(f"Loading {model_config.model_name_or_path} over...")
     model_dtype = model.dtype
-    rank0_print(script_args.tuned_lora_path)
+    print_on_main(script_args.tuned_lora_path)
     if script_args.tuned_lora_path is not None and script_args.tuned_lora_path != ["None"]:
         for lora_path in script_args.tuned_lora_path:
             model = PeftModel.from_pretrained(model, lora_path)
             model = model.merge_and_unload()
-            rank0_print(f"Load lora weights from {lora_path}")
+            print_on_main(f"Load lora weights from {lora_path}")
         model = model.to(model_dtype)
     # training_args.model_init_kwargs = model_kwargs
     tokenizer = AutoTokenizer.from_pretrained(
@@ -224,9 +282,17 @@ if __name__ == "__main__":
     ################
     # Dataset
     ################
-    dataset = obtain_dataset(script_args.data_path, script_args.learn_advantage, tokenizer)
-    dataset = split_dataset(dataset, test_size=script_args.test_split_ratio)
+    dataset = obtain_dataset(script_args.data_path, script_args.learn_advantage, script_args)
+    if training_args.eval_strategy == 'no':
+        dataset = {"train": dataset}
+    else:
+        dataset = split_dataset(dataset, test_size=script_args.test_split_ratio)
     print_on_main(model_config)
+    for key in dataset:
+        dataset[key] = dataset[key].filter(
+        lambda x: len(tokenizer.apply_chat_template(x['messages'], tokenize=True)) <= 4096
+    )
+
     ################
     # Training
     ################

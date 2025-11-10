@@ -13,9 +13,11 @@ from Evol_Instruct.MCTS.utils import extract_template, parse_action_params
 from Evol_Instruct.actions.base_action import Finish, Reflect, Think, Reason, Refine
 from Evol_Instruct.evaluation.generate_utils import set_tokenizer
 # from Evol_Instruct.models.modeling_value_llama import LlamaForValueFunction
-from Evol_Instruct.utils.utils import compute_weighted_values
+
+from Evol_Instruct.utils.utils import compute_weighted_values, timeout_retry_decorator, LogitBiasProcess
 from Evol_Instruct.models.vllm_support import VLLMServer, chat_prompt
 from Evol_Instruct.prompts.prompt_template import mcts_prompts, search_prompts
+from transformers import LogitsProcessorList
 from Evol_Instruct import client, logger
 from Evol_Instruct.MCTS.tree_node import MedMCTSNode
 from Evol_Instruct.actions.actions_register import ACTIONS_REGISTRY
@@ -23,7 +25,6 @@ from Evol_Instruct.actions.base_action import BaseAction, base_actions
 from Evol_Instruct.actions.medrag import Medrag, RAGReason
 # from Evol_Instruct.actions.hint import Hint
 from Evol_Instruct.MCTS.tree_register import register_tree, tree_registry
-from scipy.stats import gmean
 import pickle
 import pdb
 
@@ -59,10 +60,11 @@ class MCTS:
             node = MedMCTSNode(item['conversations'][0]['value'].strip("\"").strip("\n"), 
                             reasoning_step=mcts_prompts['break_down'], 
                             index=0, 
-                            ground_truth=item['answer_idx'] if training else "")
+                            ground_truth=item['answer_idx'],
+                            refine_limit=config.refine_limit)
         elif isinstance(item, str):
             node = MedMCTSNode(item, reasoning_step=mcts_prompts['break_down'], index=0,
-                               ground_truth="")
+                               ground_truth="", refine_limit=config.refine_limit)
         self.root = node
         # self.lora_request = lora_request
         # self.constant = constant
@@ -83,7 +85,11 @@ class MCTS:
         self.terminate = False
         self.finish_nodes = []
         self.first_round = first_round
-        logger.info(f"MCTS init with {self.first_round} first round")
+        if isinstance(item, dict):
+            item_id = item['id']
+        else:
+            item_id = "not given"
+        logger.info(f"MCTS init with {self.first_round} first round, {item_id}")
         self.post_init()
     
     def is_reflect_node(self, node):
@@ -118,16 +124,19 @@ class MCTS:
         self.think_action = Think({"Reason": self.actions['Reason'],
                                    "Finish": self.actions['Finish']})
         self.base_actions = base_actions
+        self.reflect_action = Reflect()
             
     
     def direct_infer_simulation(self, node: MedMCTSNode, simulation_times):
-        prompt = node.build_simu_prompt()
         simulation_times = max(simulation_times // (node.depth + 1), 5)
-        answers = self.model_server([prompt], system='You are a helpful assistant.', n=simulation_times)
-        # answers = vllm_clean_generate(self.model, prompts=[prompt], 
-        #                               system='You are a helpful assistant.', 
-        #                               n=simulation_times,
-        #                               lora_request=self.lora_request)
+        if self.first_round:
+            
+            prompt = node.build_simu_prompt()
+            
+            answers = self.model_server([prompt], n=simulation_times, temperature=0.6,top_p=0.9)
+        else:
+            prompt = chat_prompt([node.problem], self.tokenizer)[0] + node.obtain_reasoning_steps()[0]
+            answers = self.model_server([prompt], n=simulation_times, wrap_chat=False, temperature=1.0, top_p=0.9, max_tokens=1536)
         text = answers[0]
         predict_idx = [extract_template(x, 'answer') for x in text]
         is_correct = [node.is_correct(x, node.ground_truth) if x is not None else False for x in predict_idx]
@@ -146,14 +155,14 @@ class MCTS:
         # value function will takes the trajectoy as input and output value 
         conversation = [
             {"role": "user", "content": node.problem},
-            {"role": "assistant", "content": trajectory}
+            # {"role": "assistant", "content": trajectory}
         ]
-        text = self.tokenizer.apply_chat_template(conversation, tokenize=False, add_generation_prompt=False)
+        text = self.tokenizer.apply_chat_template(conversation, tokenize=False, add_generation_prompt=True) + trajectory + "\n\n"
         # assistant_content_index = text.index(trajectory)
         # assistant_content_length = len(trajectory)
         # text = text[:assistant_content_index + assistant_content_length] + "\n\n" + text[assistant_content_index + assistant_content_length:]
-        eos_len = len(self.tokenizer.eos_token)
-        text = text[:-eos_len] + "\n\n" + self.tokenizer.eos_token
+        # eos_len = len(self.tokenizer.eos_token)
+        # text = text[:-eos_len] + "\n\n" + self.tokenizer.eos_token
         
         tokens = self.tokenizer(text, return_tensors='pt', padding=True)
         tokens = {k: v.to(self.value_function.device) for k, v in tokens.items()}
@@ -217,8 +226,8 @@ class MCTS:
             # note: this condition never satisfies during inference, because inference will never set correct nodes
             return True
         # leaves = [leaf for leaf in self.obtain_leaves(self.root) if leaf.type == 'Finish']
-        if not self.training and (len(self.finish_nodes) < getattr(self.config.terminate, "least_leaves", 16)):
-            return False
+        # if not self.training and (len(self.finish_nodes) < getattr(self.config.terminate, "least_leaves", 16)):
+        #     return False
         if self.terminate_rule == "depth":
             # depth = self.root.max_depth()
             depth = self.max_depth(self.root)
@@ -270,7 +279,7 @@ class MCTS:
         #     # logger.debug(f"Choose to rollout due to leaf node not visited, Value: {value}")
         #     self.back_propagate(node,value, simulation_score)
         elif node.visits > 0 and node.depth > 0:
-            # logger.debug("Choose to expand due to leaf node visited")
+            # logger.debug(f"Choose to expand {node} due to leaf node visited")
             # pdb.set_trace()
             self.expand_node(node,
                             #  lora_request=self.lora_request,
@@ -279,8 +288,11 @@ class MCTS:
                              low_gate=self.low_gate,  **sampling_params)
         # else:
         return 0
-       
+    
+    # @timeout_retry_decorator(timeout_duration=600)
     def run(self, **sampling_params):
+        if len(self.model_server.tokenizer.encode(self.root.problem)) > 8192:
+            return None
         iter_time = 1
         if isinstance(self.autostep, int):
             sampling_params['max_tokens'] = self.autostep
@@ -371,22 +383,17 @@ class MCTS:
         else:
             node.value_trajectory = node.parent.value_trajectory + [value]
         while node:
-            if node.type == 'Finish':
-                # this is the finish node, and this trajectory is never explored
-                # set its father nodes to be completed if its father has only one child
-                node.is_completed = True
-                if simulation_score is not None:
-                    node.correct = simulation_score >= self.bear_ratio
-                    # node.incorrect = simulation_score <= self.low_gate
-                # node.correct = simulation_score >= self.bear_ratio if simulation_score is not None else False
-            else:
-                if node.children:
-                    node.is_completed = all(child.is_completed for child in node.children if child is not None)
-            # node.parent.is_completed = all(child.is_completed for child in node.parent.children)
+
             node.visits += 1
             if not node.children:
                 node.value = value if node.type != 'Finish' else simulation_score if simulation_score is not None else value
+                is_completed = node.value >= self.config.expand.bear_ratio or \
+                    (node.value < self.config.expand.low_gate and node.refine_cnt >= self.config.refine_limit)
+                node.is_completed = is_completed if node.type == 'Finish' else False
+                if simulation_score is not None:
+                    node.correct = simulation_score >= self.bear_ratio
             else:
+                
                 if getattr(self.config, 'update_rule', 'default') == 'default':
                     child_mean_value = sum(child.value * child.visits for child in node.children) / sum(child.visits for child in node.children)
                     node.value = child_mean_value
@@ -394,13 +401,14 @@ class MCTS:
                     # comprehensively consider both current value and child value
                     # this method will avoid A(1.0)->B(1.0)->C(1.0), because partial reasoning cannot be considered as 1.0
                     node.value = (node.value + sum(child.value * child.visits for child in node.children) / sum(child.visits for child in node.children) ) / 2
+                node.is_completed = all(child.is_completed for child in node.children if child is not None)
                 # node.value = (node.visits * node.value + child_mean_value) / (node.visits + 1)
                 # formula in https://arxiv.org/pdf/2406.07394
                 # node.value = 0.5 * (node.value + max([child.value for child in node.children]))
                 # node.value = 0.5 * (node.value + sum(child.value * child.visits for child in node.children) / \
                     # sum(child.visits for child in node.children))
-            # node.value += value if not node.children else max([child.value for child in node.children])
-            # node.visits += 1
+
+
             node = node.parent
     
     def select_child(self, node, constant=2):
@@ -418,19 +426,22 @@ class MCTS:
                 cur_constant = eval(constant_change)
             else:
                 cur_constant = constant
-            if child.is_completed:
-                # all its children are explored and hence it is completed
-                # choose not to explore this trace
-                if cur_constant > 0:
-                    ucb = -1
-                
-                else:
-                    
-                    ucb = value  + cur_constant * math.sqrt(math.log(node.visits) / child.visits)
-            elif child.visits == 0:
+            if child.visits == 0:
                 ucb = getattr(self.config.expand, 'unvisited_ucb', math.inf)
             else:
-                ucb = value  + cur_constant * math.sqrt(math.log(node.visits) / child.visits)
+                if child.correct and child.type == 'Finish':
+                    ucb = -1
+                elif child.type == 'Finish' and (child.value < self.low_gate and child.refine_cnt < self.config.refine_limit):
+                    # a bad node, we can refine 
+                    ucb = value + cur_constant * math.sqrt(math.log(node.visits) / child.visits)
+                elif child.is_completed:
+                    # a finish node
+                    # either a good node 
+                    # or a bad node which has undergo sufficient refinement
+                    # a seemly completed finish node with refinement quota is not listed here
+                    ucb = -1
+                else:
+                    ucb = value  + cur_constant * math.sqrt(math.log(node.visits) / child.visits)
             if ucb > max_ucb:
                 if max_ucb == getattr(self.config.expand, 'unvisited_ucb', math.inf):
                     logger.info("Explore already visited nodes")
@@ -463,7 +474,7 @@ class MCTS:
 
     def expand_node(self, node: MedMCTSNode, max_children=3, bear_ratio=0.9,
                     low_gate=0.3, whether_expand_finish=True, defined_actions=None, **sampling_params):
-        if node.is_completed:
+        if node.is_completed and node.value < low_gate and node.refine_cnt < node.refine_limit:
             return 
         if node.children != []:
             return 
@@ -480,20 +491,29 @@ class MCTS:
                 else:
                     next_actions = self.normal_expand_node(node, max_children, **sampling_params)
             else:
-                if "Reflect" in self.actions:
-                    # if node.value <= low_gate and node.visits > 0 and (node.type != 'Medrag'):
-                    if self.is_reflect_node(node):
-                        # a very bad node has already rollout, need to use reflect
+                # if "Reflect" in self.actions:
+                #     # if node.value <= low_gate and node.visits > 0 and (node.type != 'Medrag'):
+                #     if self.is_reflect_node(node):
+                #         # a very bad node has already rollout, need to use reflect
 
-                        action = 'Reflect'
+                #         action = 'Reflect'
                         
-                        n = max_children
+                #         n = max_children
                         
-                        next_actions = [action] * n
-                        if getattr(self.config, "refine", False):
-                            self.refine_node(node)
-                    else:
-                        next_actions = self.normal_expand_node(node, max_children, **sampling_params)
+                #         next_actions = [action] * n
+                #         if getattr(self.config, "refine", False):
+                #             self.refine_node(node)
+                #     else:
+                #         next_actions = self.normal_expand_node(node, max_children, **sampling_params)
+                if node.type == 'Finish' and node.value < low_gate and self.config.refine_limit > 0 and self.config.refine_limit > node.refine_cnt:
+                    node.type = 'Reason'
+                    node.is_completed = False
+                    # recursively set all parent nodes is_completed to False
+                    # current = node
+                    # while current.parent:
+                    #     current = current.parent
+                    #     current.is_completed = False
+                    next_actions = ['Reflect']
                 else:
                     if getattr(self.config, "refine", False):
                         self.refine_node(node)
@@ -520,12 +540,14 @@ class MCTS:
             step = step.replace("<steps>", "") if step.startswith("<steps>") else step
             
             # step = step.replace("<steps>", "").strip("\n")
-            if next_actions[i] == 'Finish':
-                self.process_answer_nodes(node, step, whether_expand_finish=node.value >= bear_ratio)
+            if next_actions[i] == 'Finish' or next_actions[i] == 'Reflect':
+                refine_incre = (1 if next_actions[i] == 'Reflect' else 0)
+                self.process_answer_nodes(node, step, whether_expand_finish=True, refine_incre=refine_incre)
             else:
+                # refine_incre = (1 if next_actions[i] == 'Reflect' else 0)
                 if extract_template(step.strip(), 'answer') is not None:
                     next_actions[i] = 'Finish'
-                new_node = MedMCTSNode(node.problem, step.strip(), i, parent=node, type=next_actions[i], ground_truth=node.ground_truth,)
+                new_node = MedMCTSNode(node.problem, step.strip(), i, parent=node, type=next_actions[i], ground_truth=node.ground_truth)
                 node.add_child(new_node)
                 if next_actions[i] == 'Finish':
                     self.finish_nodes.append(new_node)
@@ -536,6 +558,9 @@ class MCTS:
                     # pdb.set_trace()
                     value, simulation_score = self.rollout(new_node, self.direct_infer_simulation, simulation=self.config.simulation)
                 self.back_propagate(new_node, value, simulation_score)
+        if node.children == []:
+            # exceed the limit , mark as completed
+            node.is_completed = True
         return
             
     def refine_node(self, node: MedMCTSNode):
@@ -559,90 +584,79 @@ class MCTS:
             logger.info("refine success, update the node value")
             node.reasoning_step = temp.reasoning_step
 
-    def tot_expand_node(self, node: MedMCTSNode, max_children=3, bear_ratio=0.9, low_gate=0.3, whether_expand_finish=True, defined_actions=None, **sampling_params):
-        next_actions = self.normal_expand_node(node, max_children, **sampling_params)
-        observations = self.step_observation(node, next_actions, **sampling_params)
-        for i in range(len(next_actions)):
-            if observations[i] is None:
-                continue
-            step = observations[i].strip("\n")
-            step = step.replace("<steps>", "") if step.startswith("<steps>") else step
-
-            if next_actions[i] == 'Finish':
-                if extract_template(step, 'answer') is None:
-                    next_actions[i] = 'Reason'
-                    
-            else:
-                if extract_template(step.strip(), 'answer') is not None:
-                    next_actions[i] = 'Finish'
-                
-            new_node = MedMCTSNode(node.problem, step.strip(), len(node.children), parent=node, type=next_actions[i], ground_truth=node.ground_truth,)
-            node.add_child(new_node)
     
-    def process_answer_nodes(self, node: MedMCTSNode, reasoning_step: str, whether_expand_finish: bool=True):
-        steps = reasoning_step.split("Step")
-        steps = [step[4:] if i > 0 else step for i, step in enumerate(steps) ]
-        if len(steps) > 1 and extract_template(steps[-1], "answer") is not None:
-            # a Finish node generate more than one steps
-            # generate intermediate steps 
-            # pdb.set_trace()
-            if whether_expand_finish:
-                temp = node
-                for each_step in steps[:-1]:
-                    new_node = MedMCTSNode(node.problem, each_step.strip(), len(temp.children), parent=temp, type='Reason', ground_truth=temp.ground_truth)
-                    new_node.value = temp.value 
-                    new_node.value_trajectory = temp.value_trajectory
-                    new_node.visits = 1
-                    temp.add_child(new_node)
-                    temp = new_node 
-                    
-                new_node = MedMCTSNode(node.problem, steps[-1].strip(), len(temp.children), parent=temp, type='Finish', ground_truth=temp.ground_truth)
-                temp.add_child(new_node)
-                self.config.terminate.max_nodes += len(steps) - 1
-            else:
-                new_node = MedMCTSNode(node.problem, reasoning_step.strip(), len(node.children), parent=node, type='Finish', ground_truth=node.ground_truth)
-                node.add_child(new_node)
-            if self.value_function is not None:
-                # inference mode
-                value, simulation_score = self.rollout(new_node, self.value_func_simulation)
-            else:
-                # pdb.set_trace()
-                value, simulation_score = self.rollout(new_node, self.direct_infer_simulation, simulation=self.config.simulation)
-            self.finish_nodes.append(new_node)
-            # generate the final answer node
+    
+    def process_answer_nodes(self, node: MedMCTSNode, reasoning_step: str, whether_expand_finish: bool = True, refine_incre: int = 0):
+        """
+        Split a potentially multi‑step finish into intermediate 'Reason' nodes
+        and a final node, then rollout and back‑propagate each.
+        """
+        # 1. split into steps
+        parts = reasoning_step.split("Step")
+        steps = [parts[0].strip()] + [p[4:].strip() for p in parts[1:]]
+        multi = len(steps) > 1 and extract_template(steps[-1], "answer") is not None
+
+        parent = node
+        new_nodes = []
+
+        # 2. create intermediate Reason nodes if multi‐step and allowed
+        if multi and whether_expand_finish:
+            for text in steps[:-1]:
+                child = MedMCTSNode(
+                    node.problem,
+                    text,
+                    len(parent.children),
+                    parent=parent,
+                    type="Reason" if refine_incre == 0 else 'Reflect',
+                    ground_truth=node.ground_truth,
+                    refine_cnt=node.refine_cnt + refine_incre
+                )
+                # inherit parent stats
+                child.value = parent.value
+                child.value_trajectory = parent.value_trajectory.copy()
+                child.visits = 1
+                parent.add_child(child)
+                new_nodes.append(child)
+                parent = child
+            # account for extra nodes in termination count
+            self.config.terminate.max_nodes += len(steps) - 1
+            final_text = steps[-1]
         else:
-            # a single step for Finish action
-            target = "The answer is"
-            
-            if extract_template(steps[-1], "answer") is not None:
-                
-                first_occurence = max(steps[-1].find(target), steps[-1].find(target.lower()))
-            else:
-                first_occurence = -1
-            if first_occurence != -1:
-                second_occurence = max(steps[-1].find(target, first_occurence + len(target)),
-                                       steps[-1].find(target.lower(), first_occurence + len(target)))
-                if second_occurence != -1:
-                    steps[-1] = steps[-1][:second_occurence].strip("\n")
-                else:
-                    steps[-1] = steps[-1].strip("\n")
-                node_type = 'Finish'
-                
-            else:
-                node_type = 'Reason'
-            new_node = MedMCTSNode(node.problem, steps[-1].strip(), len(node.children), parent=node, type=node_type, ground_truth=node.ground_truth)
-            node.add_child(new_node)
-            if node_type == 'Finish':
-                self.finish_nodes.append(new_node)
-            if self.value_function is not None:
-                # inference mode
-                value, simulation_score = self.rollout(new_node, self.value_func_simulation)
-            else:
-                # pdb.set_trace()
-                value, simulation_score = self.rollout(new_node, self.direct_infer_simulation, simulation=self.config.simulation)
+            final_text = steps[0]
         
-        self.back_propagate(new_node, value, simulation_score)
-        return new_node
+        
+        # remove duplicated "The answer is" if present twice
+        tmpl = "The answer is"
+        ans = extract_template(final_text, "answer")
+        if ans:
+            idx = final_text.lower().find(tmpl.lower())
+            nxt = final_text.lower().find(tmpl.lower(), idx + len(tmpl))
+            if nxt != -1:
+                final_text = final_text[:nxt].strip()
+
+        node_type = "Finish" if ans else "Reason"
+        final = MedMCTSNode(
+            node.problem,
+            final_text,
+            len(parent.children),
+            parent=parent,
+            type=node_type,
+            ground_truth=node.ground_truth,
+            refine_cnt=node.refine_cnt + refine_incre
+        )
+        parent.add_child(final)
+        # new_nodes.append(final)
+        if node_type == "Finish":
+            self.finish_nodes.append(final)
+
+        # 4. rollout & back‑propagate final node
+
+        rollout_fn = self.value_func_simulation if self.value_function else self.direct_infer_simulation
+        val, sim = self.rollout(final, rollout_fn, simulation=self.config.simulation)
+
+        self.back_propagate(final, val, sim)
+
+        return final
     
     
     def rollout(self, node: MedMCTSNode, simu_func: Callable[[MedMCTSNode], tuple[float, float]], simulation=20):
@@ -691,19 +705,23 @@ class MCTS:
                     self.back_propagate(leaf, value, simu_value)
                 sampling_params['n'] = 1
                 action_class = self.actions['Finish']
+                sampling_params['max_tokens'] = 4096
                 step = action_class(leaf, self.model_server, few_shot=self.few_shot, first=self.training and self.first_round, direct_output=True, **sampling_params)
                 # step = self.step_llm_action(node, action, **sampling_params)
                 # reasoning_steps = self.model_server(prompt=[cur_prompt], **sampling_params)
                 step = step[0]
-                
-                # step = reasoning_steps[0][0]
-                new_node = MedMCTSNode(node.problem, step.strip(), 0, parent=leaf, type=action, ground_truth=node.ground_truth)
-                leaf.add_child(new_node)
-                value, simu_value = new_node.eval_node(value_function, training=self.training)
-                # if simu_value == 1
+                final_node = self.process_answer_nodes(leaf, step, )
+                # if step is None: 
+                #     continue
+                # # step = reasoning_steps[0][0]
+                # new_node = MedMCTSNode(node.problem, step.strip(), 0, parent=leaf, type=action, ground_truth=node.ground_truth)
+                # leaf.add_child(new_node)
+                # value, simu_value = new_node.eval_node(value_function, training=self.training)
+                # # if simu_value == 1
+                value = final_node.value
                 if abs(value - 1) < 1e-6:
                     correct_leaves_num += 1
-                self.back_propagate(new_node, value=float(value), simulation_score=simu_value)
+                # self.back_propagate(new_node, value=float(value), simulation_score=simu_value)
             elif leaf.type == 'Finish':
                 if leaf.visits == 0:
                     value, simu_value = leaf.eval_node(value_function, training=self.training)
@@ -750,22 +768,21 @@ class MCTS:
         for action, index in action_index.items():
             count = action_count[action]
             sampling_params['n'] = count
-
-            action_class = self.actions[action]
-            # output = action_class(node, self.model_server, few_shot=self.few_shot, first=self.training, **sampling_params)
-            if action_class.action_name == 'Finish':
-                output = action_class(node, self.model_server, few_shot=self.few_shot, first=self.training and self.first_round,  direct_output=(node.value >= self.config.expand.bear_ratio and (self.training or mcts_inference)), **sampling_params)
+            if action == 'Reflect':
+                output = self.reflect_action(node, self.model_server, few_shot=0, **sampling_params)
             else:
-                output = action_class(node, self.model_server, few_shot=self.few_shot, first=self.training and self.first_round, **sampling_params)
+                action_class = self.actions.get(action, None)
+
+
+                if action_class.action_name == 'Finish':
+                    output = action_class(node, self.model_server, few_shot=self.few_shot, first=self.training and self.first_round, direct_output=True, **sampling_params)
+                else:
+                    output = action_class(node, self.model_server, few_shot=self.few_shot, first=self.training and self.first_round, **sampling_params)
             # pdb.set_trace()
             
             for i in range(len(output)):
-                observations[index[i]] = output[i].strip()
-            # else:
-            #     print(f"{action} is not supported in the current action space: {self.base_actions}")
-            #     raise NotImplementedError
+                observations[index[i]] = output[i].strip() if output[i] is not None else None
 
-            # pdb.set_trace()
         return observations
     
     def construct_output_trace(self, nodes: list[MedMCTSNode]):
@@ -792,17 +809,6 @@ class MCTS:
         output = [each[:each.find(trigger) + len(trigger) + 1] + "." for each in new_output]
         return output
 
-    def multisource_rag(self, node: MedMCTSNode, action_list: list[str], **sampling_params):
-        source_list = getattr(getattr(self.config, "Medrag", {}), "source_list", ["MedCorp"])
-        observations = []
-        assert len(source_list) == len(action_list)
-        for source in source_list:
-            params = parse_action_params(action_list[0], self.config)
-            params['corpus_name'] = source 
-            action_class = Medrag(**params)
-            output = action_class(node, self.model_server, few_shot=self.few_shot, **sampling_params)
-            observations.append(output[0].strip())
-        return observations
     
     def derive_answer(self, node: MedMCTSNode, **sampling_params):
         action_class = Finish()
@@ -811,169 +817,9 @@ class MCTS:
 
         step = step[0]
 
-        new_node = MedMCTSNode(node.problem, step.strip(), 0, parent=node, type='Finish', ground_truth=node.ground_truth)
+        new_node = MedMCTSNode(node.problem, step.strip(), 0, parent=node, type='Finish', ground_truth=node.ground_truth, refine_cnt =node.refine_cnt)
         node.add_child(new_node)
     
-    def tot_bfs(self, beam_size=8, finish_candidates=16, value_op='identity', **sampling_params):
-        # conduct beam search, every layer maintains the nodes with highest `beam_size` value 
-        # maintain a list to store the finish nodes
-        # this list should make the node with the lowest value to be popped once a new Finish node is generated and this new node has higher value than the top node
-        # this list should be a priority queue, and the priority is the value of the node
-        try:
-            value_op = eval(value_op)
-            value_op([1,2,3])
-        except:
-            value_op = lambda x: x[-1]
-        candidate_nodes = [self.root]
-        
-        finish_nodes = PriorityQueue()
-        # left_nodes = PriorityQueue()
-        could_derive_answer_layer = 4
-        while candidate_nodes:
-            candidate_children_nodes = []
-            for node in candidate_nodes:
-                if node.type == 'Finish':
-                    if finish_nodes.full():
-                        finish_nodes.get()
-                    finish_nodes.put((value_op(node.value_trajectory), node))
-                    continue
-                try:
-                    if node.depth >= 9 or (node.value >= 0.9 and node.depth >= could_derive_answer_layer):
-                        # a very deep node, directly expand Finish node
-                        self.derive_answer(node, **sampling_params)
-                    else:
-                        if node.depth == 0:
-                            max_children = finish_candidates 
-                        else:
-                            max_children = beam_size
-                        # whether_expand_finish = (not node.depth >= could_derive_answer_layer)
-                        self.tot_expand_node(node, max_children=max_children, whether_expand_finish=False, **sampling_params)
-
-                except AttributeError as e:
-                    logger.error(f"Error in expanding node: {node}")
-                    continue
-                candidate_children_nodes += node.children
-                for child in node.children:
-                    value, _ = self.rollout(child, self.value_func_simulation)
-                    child.value = value
-                    child.value_trajectory = node.value_trajectory + [value]
-            # now for each node in candidate_nodes, we have expanded its children and obtain values
-            # sort the candidate_children_nodes based on its value
-            candidate_children_nodes.sort(reverse=True, key=lambda x: value_op(x.value_trajectory))
-            # candidate_nodes = candidate_children_nodes[:beam_size]
-            candidate_nodes = candidate_children_nodes[:finish_candidates]
-
-        result = [x[1] for x in finish_nodes.queue[-finish_candidates:]]
-        
-        # while not finish_nodes.empty():
-        #     result.append(finish_nodes.get()[1])
-        return result
-    
-    
-    def tot_dfs(self, beam_size=3, finish_candidates=16, stop_finish_nodes=32, value_op='identity', **sampling_params):  
-        # conduct dfs on the tree; maintain a list to store the nodes that can be expanded
-        # once expand a node, select its child with the highest value
-        # if the child is a Finish node, add it to the finish_nodes, and back traverse to its father nodes
-        try:
-            value_op = eval(value_op)
-            value_op([1,2,3])
-        except:
-            value_op = lambda x: x[-1]
-        # candidate_nodes = [self.root]
-        finish_nodes = PriorityQueue()
-        could_derive_answer_layer = 4
-        node = self.root
-        while node and finish_nodes.qsize() < stop_finish_nodes:
-            node.visits = 1
-            if (node.value < 0.3 and (not finish_nodes.empty())) and node.depth > 1:
-                # a pre-defined threshold to filter out low quality nodes
-                # allow it has low value at first layer, but strict for deeper layer
-                node = node.parent
-                continue
-            if node.type == 'Finish':
-                if finish_nodes.full():
-                    finish_nodes.get()
-                finish_nodes.put((value_op(node.value_trajectory), node))
-                node = node.parent
-                continue 
-            if not node.children:
-
-                if node.depth >= 9 or (node.value >= 0.9 and node.depth >= could_derive_answer_layer):
-                    # a very deep node, directly expand Finish node
-                    self.derive_answer(node=node, **sampling_params)
-                else:
-                    # whether_expand_finish = (not node.depth >= could_derive_answer_layer)
-                    
-                    self.tot_expand_node(node, max_children=beam_size, whether_expand_finish=False, **sampling_params)
-                for child in node.children:
-                    value, _ = self.rollout(child, self.value_func_simulation)
-                    child.value = value 
-                    child.value_trajectory = node.value_trajectory + [value]
-                    child.parent = node 
-
-            # sort the children based on its value
-            # candidate_children_nodes = sorted(explore_node.children, reverse=True, key=lambda x: value_op(x.value_trajectory))
-            candidates = [k for k in node.children if k.visits == 0 and (k.value > 0.3 or k.depth <= 1 or finish_nodes.qsize() < finish_candidates)]
-            if not candidates:                
-                node = node.parent 
-            else:
-                node = max(candidates, key=lambda x: value_op(x.value_trajectory))
-                
-
-        
-        result = [x[1] for x in finish_nodes.queue]
-        # while not finish_nodes.empty() and len(results) < finish_candidates:
-        #     result.append(finish_nodes.get()[1])
-        return result
-        
-    
-    def tot_inference(self, expand_way='bfs', beam_size=4, finish_candidates=16, infer_rule='prm-gmean-vote-sum', **sampling_params):
-        if isinstance(self.autostep, int):
-            sampling_params['max_tokens'] = self.autostep
-        elif isinstance(self.autostep, str):
-            sampling_params['stop'] = [f"Step {i}:" for i in range(1, 100)]
-        
-        if expand_way == 'bfs':
-            leaves = self.tot_bfs(beam_size, finish_candidates, value_op='identity', **sampling_params)
-        elif expand_way == 'dfs':
-            leaves = self.tot_dfs(beam_size, finish_candidates, value_op='identity', **sampling_params)
-        else:
-            raise NotImplementedError
-        only_answer_outputs = [extract_template(leaf.reasoning_step, 'answer') for leaf in leaves]
-        values = [[0] + leaf.value_trajectory for leaf in leaves]
-        max_answer, weighted_values = compute_weighted_values(only_answer_outputs, values, infer_rule)
-        
-        max_weighted_value = weighted_values[max_answer]
-        tie_answers = [ans for ans, val in weighted_values.items() if abs(val - max_weighted_value) < 1e-6]
-        value_op = infer_rule.split("-")[1] if infer_rule.startswith('prm') else 'identity'
-        try:
-            value_op = eval(value_op)
-        except:
-            value_op = lambda x: x[-1]
-        if len(tie_answers) == 1:
-            # 没有平局，直接选择 max_answer 对应的节点
-            # best_node = 
-            best_node =  max((node for node in leaves if extract_template(node.reasoning_step, 'answer') == max_answer), key=lambda n: n.value)
-        else:
-            best_node = None
-            best_value = float('-inf')
-            for leaf in leaves:
-                
-                if extract_template(leaf.reasoning_step, 'answer') in tie_answers and value_op(leaf.value_trajectory) > best_value:
-                    best_value = value_op(leaf.value_trajectory)
-                    best_node = leaf
-
-        return leaves, best_node
-    
-    def print_tree(self, node):
-        if node.children:
-            children_str = ", ".join([f"Node ({child.trace})" for child in node.children])
-            print(f"[Trace: {node.trace}, Value: {node.value}, Visits: {node.visits}] -> [{children_str}]")
-        else:
-            print(f"[Trace: {node.trace}, Value: {node.value}, Visits: {node.visits}]")
-        for child in node.children:
-            self.print_tree(child)
-            
 
 def print_node(node: MedMCTSNode):
     print(node)
@@ -981,124 +827,3 @@ def print_node(node: MedMCTSNode):
     
     for child in node.children:
         print_node(child)  
-
-if __name__ == "__main__":
-    from transformers import AutoTokenizer, AutoModelForSequenceClassification
-    from peft import PeftModel
-    from Evol_Instruct.models.modeling_value_llama import ValueModel
-    torch.set_default_device("cuda")
-    # model_path = '/mnt/hwfile/medai/LLMModels/Model/Meta-Llama-3-8B-Instruct'
-    model_path = '/mnt/hwfile/medai/LLMModels/Model/Meta-Llama-3.1-8B-Instruct-ysl'
-    # model_path = '/mnt/hwfile/medai/LLMModels/Model/Mistral-7B-Instruct-v0.3'
-    # model_path = '/mnt/hwfile/medai/LLMModels/Model/Qwen2.5-7B-Instruct'
-    # model_path = '/mnt/hwfile/medai/LLMModels/Model/Phi-3.5-mini-instruct'
-    # model_path = '/mnt/hwfile/medai/LLMModels/Model/gemma-2-9b-it'
-    # model_path = ''
-    # model_path = '/mnt/petrelfs/jiangshuyang.p//checkpoints/llama318b_mcts_vllm_mix16_500_data_all_trial5/sft_1-llama3.1-8b-r16a32-1epoch-SFT-full-ITER1'
-    
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    tokenizer = set_tokenizer(tokenizer)
-    # data = client.read("s3://syj_test/datasets/medical_train/pubhealth.json")
-    data = client.read("/mnt/petrelfs/jiangshuyang.p/datasets/medical_test/MedQA_cot.json")
-    # data = client.read("/mnt/petrelfs/jiangshuyang.p/datasets/medical_train/medqa_train.json")
-    # for i in range(15):
-    # model_base = LlamaForValueFunction.from_pretrained(
-    #     "/mnt/hwfile/medai/LLMModels/Model/Meta-Llama-3-8B-Instruct",
-    #     num_labels=1
-    # )
-    # model_base = AutoModelForSequenceClassification.from_pretrained(
-    #     # "/mnt/hwfile/medai/LLMModels/Model/Meta-Llama-3-8B-Instruct",
-    #     model_path,
-    #     # "/mnt/petrelfs/jiangshuyang.p//checkpoints/llama38b_mcts_vllm_medqa_train_all_search_1000/sft_1-llama3-8b-r16a32-1epoch-VALUE-full-ITER1/checkpoint-100",
-    #     num_labels=1
-    # )
-    sft_model_path = '/mnt/petrelfs/jiangshuyang.p//checkpoints/llama318b_mcts_vllm_mix16_500_data_all_trial5/sft_1-llama3.1-8b-r16a32-1epoch-SFT-ITER1'
-    # reward_model_path = '/mnt/petrelfs/jiangshuyang.p//checkpoints/llama318b_mcts_vllm_mix16_500_data_all_trial5/sft_1-llama3.1-8b-r16a32-1epoch-VALUE-prm_train5_r64-ITER1'
-    reward_model_path = '/mnt/petrelfs/jiangshuyang.p//checkpoints/llama318b_mcts_vllm_mix16_500_data_all_trial5/sft_1-llama3.1-8b-r16a32-1epoch-VALUE-prm_trainall_r64_softtrain_basepolicy-ITER1'
-    value_model = ValueModel(model_path, [sft_model_path,reward_model_path], 'prm')
-    
-    # # # sft_model = PeftModel.from_pretrained(model_base, sft_model_path).merge_and_unload()
-    # value_model = PeftModel.from_pretrained(model_base, reward_model_path).merge_and_unload().to(torch.float16)
-    # print(value_model.config)
-    # value_model = PeftModel.from_pretrained(model_base, "/mnt/petrelfs/jiangshuyang.p//checkpoints/llama38b_mcts_vllm_medqa_train_all_search_1000/sft_1-llama3-8b-r16a32-1epoch-VALUE_new2-ITER1")
-    # value_model = value_model.merge_and_unload().to(torch.float16)
-    # value_model = model_base
-    # value_model = None
-    # server = VLLMServer(url="http://10.140.1.163:10003", model=model_path, tokenizer=tokenizer, offline=True)
-    # server = VLLMServer(url="http://10.140.1.163:10002", model=model_path, tokenizer=tokenizer, offline=True, lora_path=None, gpu_memory_usage=0.45, max_model_len=16384)
-    server = VLLMServer(url="http://10.140.1.163:10002", model=model_path, tokenizer=tokenizer, offline=True, gpu_memory_usage=0.5, lora_path=sft_model_path, max_model_len=16384)
-    # exit(0)
-    while 1:
-        i = int(input("Input the test number ID: "))
-        # i = 3
-        item = data[i]
-        logger.info(item)
-        # logger.info(f"Correct answer: {item['answer_idx']}")
-        if 'answer_idx' not in item:
-            item['answer_idx'] = item['eval']['answer']
-        # # print(node)
-        config = client.read(path="Evol_Instruct/config/trial5.json")
-        config = MCTSConfig(config)
-        # config.terminate.max_nodes = 120
-        # config.expand.unvisited_ucb = 2
-
-        # config.max_children=3
-        config.terminate.least_leaves = 16
-        mcts_cls = tree_registry[config.mcts_cls]
-        # config.expand.max_children = 16
-        tree: MCTS = mcts_cls(item, model_server=server, config=config, value_function=value_model, training=False)
-        tokenizer = tree.tokenizer 
-        start = time.time()
-        # leaves, best_node = tree.tot_inference(expand_way='dfs', beam_size=3)
-        # leaves, best_node = tree.tot_inference(expand_way='bfs', beam_size=6)
-        root = tree.run(temperature=1)
-        # node, node_steps = tree.inference("vote-sc")
-        # exit(0)
-        # correct_leaves = tree.obtain_correct_leaves()
-        # incorrect_leaves = tree.obtain_incorrect_leaves()
-        # repeat_try = config.repeat_try
-        # while not correct_leaves and repeat_try > 0:
-        #     tree = MCTS(item, model_server=server, config=config, value_function=value_model, training=False)
-        #     root = tree.run()
-        #     correct_leaves = tree.obtain_correct_leaves()
-        #     repeat_try -= 1
-        end = time.time()
-        # print(node.obtain_reasoning_steps()[0], flush=True)
-        # pdb.set_trace()
-        client.write("", "debug.log", mode='w')
-        fp = open("debug.log", 'a')
-        leaves = tree.obtain_leaves(root)
-        leaves = [leaf for leaf in leaves if leaf.type == 'Finish']
-        weighted_values = defaultdict(float)
-        count_values = defaultdict(int)
-        for leaf in leaves:
-            answer = extract_template(leaf.obtain_reasoning_steps()[0], 'answer')
-            if answer is not None:
-                weighted_values[answer] += leaf.value 
-                count_values[answer] += 1
-        print(f"Weighted values: {weighted_values}\nCount values: {count_values}", file=fp, flush=True)
-        for leaf in leaves:
-            print(leaf.obtain_reasoning_steps()[0], leaf.value_chain(), file=fp, flush=True)
-            print("*" * 100, file=fp, flush=True)
-        
-        node, node_steps = tree.inference('prm-prod-vote-sum')
-        print("PRM GMean Vote Sum:", node_steps, node.value_chain(), file=fp, flush=True)
-        
-        node, node_steps = tree.inference('prm-prod-vote-mean')
-        print("PRM GMean Vote Mean:", node_steps, node.value_chain(), file=fp, flush=True)
-        # node, node_steps = tree.inference('prm-prod-vote-sum')
-        # print("PRM Production Vote Sum:", node_steps, node.value_chain(), file=fp, flush=True)
-        
-        # node, node_steps = tree.inference("vote-mean")
-        # print("Vote Mean:", node_steps, node.value_chain(), file=fp, flush=True)
-        
-        # node, node_steps = tree.inference("vote-sum")
-        # print("Vote-Sum:", node_steps, node.value_chain(), file=fp, flush=True)
-        
-        # node, node_steps = tree.inference("level_max")
-        # print("level-max:", node_steps, node.value_chain(), file=fp, flush=True)
-        
-        print("*" * 100, file=fp, flush=True)
-        
-        logger.info(f"Time cost: {end - start}")
-    

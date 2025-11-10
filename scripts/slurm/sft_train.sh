@@ -31,9 +31,8 @@ TASK_PATH="$1"
 TRAINING_DATA="$2"
 MODEL_BASE="$3"
 SAVE_PATH="$4"
-CKPT="$5"
-previous_lora_path="$6"
-other_params="$7"
+previous_lora_path="$5"
+other_params="$6"
 # --learn_advantage True/False 
 if [ -z "$previous_lora_path" ]; then
     previous_lora_path="None"
@@ -57,7 +56,7 @@ echo "${other_params}"
 echo ""
 
 
-bash /mnt/petrelfs/jiangshuyang.p/add_oss.sh
+
 TORCH_USE_CUDA_DSA=1
 CUDA_LAUNCH_BLOCKING=1
 srun --jobid $SLURM_JOBID python -u -m torch.distributed.run \
@@ -93,10 +92,3 @@ srun --jobid $SLURM_JOBID python -u -m torch.distributed.run \
     --report_to wandb \
     ${argv[@]}
 
-    # --num_experts 4 \
-    # --num_experts_per_token 2 \
-    # --expert_selection "sampling" \
-    # --add_identity_mapping 1 \
-    # --inference_path 2 \
-    # --output_logit_loss 2 \
-    # --router_loss_coeff 1 \

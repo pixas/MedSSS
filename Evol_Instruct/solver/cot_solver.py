@@ -1,13 +1,13 @@
-from Evol_Instruct.evaluation.eval_em import extract_answer_content
-from Evol_Instruct.models.vllm_support import chat_prompt, vllm_clean_generate
+
+from Evol_Instruct.models.vllm_support import chat_prompt
 from Evol_Instruct.solver.base_solver import Solver
 from Evol_Instruct.utils.utils import AlpacaTaskItem
-from Evol_Instruct.evaluation.generate_utils import infer_answer
+from Evol_Instruct.models.openai_access import batch_call_chatgpt
 
 class CoTSolver(Solver):
     def generate_response(self, items: list[AlpacaTaskItem], **kwargs):
         prompts = [chat_prompt([item.prompt], self.server.tokenizer,
-                               system='You are a helpful medical assistant.')[0] for item in items]
+                               system=self.system)[0] for item in items]
         temperature = kwargs.pop("temperature", 0)
         n = kwargs.pop("n", 1)
         max_tokens = kwargs.pop("max_tokens", 1024)
@@ -16,31 +16,51 @@ class CoTSolver(Solver):
         outputs = self.server(
             prompts,
             wrap_chat=False,
-            system='You are a helpful medical assistant.',
+            # system='You are a helpful medical assistant.',
             temperature=temperature,
             n=n,
             max_tokens=max_tokens,
             top_p=top_p
         )
         outputs = [output[0] for output in outputs]
-        generated_answer = [extract_answer_content(x) for x in outputs]
-        no_answer_index = [i for i, x in enumerate(generated_answer) if x is None]
-        no_answer_outputs = [outputs[i] for i in no_answer_index]
-        no_answer_prompts = [prompts[i] for i in no_answer_index]
-        if no_answer_index:
+        if self.whether_infer_answer:
             answer_outputs = self.infer_answer(
-                no_answer_prompts,
-                no_answer_outputs,
+                prompts,
+                outputs,
                 choices_word=self.choices_word,
                 cot_prompt=self.cot_prompt
             )
-            for i, index in enumerate(no_answer_index):
-                outputs[index] = answer_outputs[i]
-        answer_outputs = outputs
+        else:
+            answer_outputs = outputs
+
+        for i, item in enumerate(items):
+            item.text = answer_outputs[i]
+            
+        return items
+
+
+
+class GPTCoTSolver(Solver):
+    def generate_response(self, items: list[AlpacaTaskItem], **kwargs):
+        prefix_prompt = "Think the problem step by step and finalize the answer as 'The answer is ANS', where `ANS` is the final answer. For multiple-choice problem, ANS should be the choice letter.\n\n"
+        prompts = [prefix_prompt + item.prompt for item in items]
+        # prompts = [chat_prompt([item.prompt], self.server.tokenizer,
+                            #    system=self.system)[0] for item in items]
+        temperature = kwargs.pop("temperature", 0)
+        n = kwargs.pop("n", 1)
+        max_tokens = kwargs.pop("max_tokens", 1024)
+        top_p = kwargs.pop("top_p", 0.95)
+        # outputs = [
+        #     call_chatgpt(self.server, prompt, n=n, max_tokens=max_tokens) for prompt in prompts
+        # ]        
+        outputs = batch_call_chatgpt(self.server, prompts, n=n, max_tokens=max_tokens)
+        
+        outputs = [output[0] for output in outputs]
+        
         # if "The answer is" in 
         # answer_outputs = self.infer_answer(prompts, outputs, self.choices_word,
                                         #    cot_prompt="\nThe answer is ")
         for i, item in enumerate(items):
-            item.text = answer_outputs[i]
+            item.text = outputs[i]
             
         return items

@@ -10,7 +10,7 @@
     "constant": 2,
     "low_gate": 0.5,
     "bear_ratio": 0.9,
-    "actions": ["Reason", "Finish"],
+    "actions": ["Reason", "Finish", "Reflect"],
     "unvisited_ucb": 5,
     "constant_change": "constant"
   },

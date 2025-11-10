@@ -1,15 +1,27 @@
 #!/bin/bash
 #SBATCH -J eval_med_chunk
-#SBATCH --partition=medai_llm
+#SBATCH --partition=partition
 #SBATCH -N1
 #SBATCH --quotatype=auto
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --ntasks-per-node=1    
-#SBATCH --mem-per-cpu=8G  
+#SBATCH --mem=64G  
 #SBATCH --time=5-00:00:00
 ###SBATCH --kill-on-bad-exit=1
 
+
+
+nodes=( $( scontrol show hostnames $SLURM_JOB_NODELIST ) )
+nodes_array=($nodes)
+head_node=${nodes_array[0]}
+head_node_ip=$(srun -N1 -n1 -w "$head_node" hostname --ip-address)
+
+
+NNODES=$SLURM_NNODES
+
+echo Node IP: $head_node_ip nodes_array: $nodes_array
+srun bash -c 'echo $SLURMD_NODENAME-$SLURM_JOB_GPUS' # 打印出不同机器上分配的显卡编号
 
 TASK_PATH="$1"
 MODEL_BASE="$2"
@@ -30,42 +42,20 @@ infer_rule=${16:-"None"}
 custom_name=${17}
 DATA_PATH=${TASK_PATH}/medical_test
 
-srun bash -c 'echo $SLURMD_NODENAME-$SLURM_JOB_GPUS' # 打印出不同机器上分配的显卡编号
+
 CUDA_LAUNCH_BLOCKING=1
-if [[ $DATASET == "tydiqa_cot" ]]; then
-    bs=2
-elif [[ $DATASET == *"CBLUE"* ]]; then
-    bs=4
-else
-    bs=16
-fi
-if [[ $SAMPLING_NUMBER == 32 ]]; then
-    
-    bs=8
-fi
-if [[  $DATASET == *"medsins"* ]]; then 
-    bs=1
-fi
 
-if [[ $SAMPLING_STRATEGY == 'scvm' ]]; then 
-    bs=2
-fi
 
-bash ~/add_oss.sh
+
+bs=8
+
+
 
 dir_path=${LOGS_BASE_PATH}/${CKPT}/${DATASET}
 mkdir -p ${dir_path}
 
 if [[ $SAMPLING_STRATEGY == "sc" ]]; then 
     dir_path=${dir_path}/sc-${SAMPLING_NUMBER}
-elif [[ $SAMPLING_STRATEGY == "scvm" ]]; then 
-    dir_path=${dir_path}/scvm-${infer_rule}-${SAMPLING_NUMBER}
-elif [[ $SAMPLING_STRATEGY == "dpo_judge" ]]; then 
-    dir_path=${dir_path}/dpo_judge-${dpo_from}-${dpo_select_method}-${SAMPLING_NUMBER}
-elif [[ $SAMPLING_STRATEGY == "dpo_greedy" ]]; then 
-    dir_path=${dir_path}/dpo-greedy
-elif [[ $SAMPLING_STRATEGY == "dpo_sc" ]]; then 
-    dir_path=${dir_path}/dpo-sc-${SAMPLING_NUMBER}
 else
     dir_path=${dir_path}/greedy
 fi
@@ -98,7 +88,6 @@ srun --output=${dir_path}/infer-${num_chunks}-${chunk_idx}.log  python -m Evol_I
     --temperature $temperature \
     --use-logit-bias \
     --batch-size $bs \
-    --max-new-tokens 8192 \
     --value_model_base "${value_model_base}" \
     --sampling_numbers $SAMPLING_NUMBER \
     --sampling_strategy $SAMPLING_STRATEGY \

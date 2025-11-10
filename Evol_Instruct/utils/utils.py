@@ -368,89 +368,7 @@ def compute_weighted_values(only_answer_outputs, values, method: str):
         final_answer = max(answer_dict, key=answer_dict.get)
     elif "max" in method:
         final_answer = max(zip(only_answer_outputs, values), key=lambda x: x[1])[0]
-    # if method == 'vote-sum':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         if isinstance(score, list):
-    #             score = score[-1]
-    #         answer_dict[answer] += score
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'vote-mean':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         if isinstance(score, list):
-    #             score = score[-1]
-    #         answer_dict[answer] += score
-    #     answer_count = Counter([answer for answer in only_answer_outputs])
-    #     for answer in answer_dict:
-    #         answer_dict[answer] /= answer_count[answer]
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'prm-mean-vote-sum':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         answer_dict[answer] += np.mean(score[1:])
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'prm-min-vote-sum':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         answer_dict[answer] += np.min(score[1:])
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'prm-gmean-vote-sum':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         answer_dict[answer] += scipy.stats.gmean(score[1:])
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'prm-gmean-max':
-    #     answer_dict = defaultdict(float)
-    #     values = [scipy.stats.gmean(x[1:]) for x in values]
-    #     # for answer, score in zip(only_answer_outputs, values):
-    #     #     answer_dict[answer] += scipy.stats.gmean(score[1:])
-    #     final_answer = max(zip(only_answer_outputs, values), key=lambda x: x[1])[0]
-    # elif method == 'prm-gmean-vote-mean':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         answer_dict[answer] += scipy.stats.gmean(score[1:])
-    #     answer_count = Counter([answer for answer in only_answer_outputs])
-    #     for answer in answer_dict:
-    #         answer_dict[answer] /= answer_count[answer]
-        
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-        
-    # elif method == 'prm-prod-vote-sum':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         answer_dict[answer] += np.prod(score[1:])
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'prm-vote-sum':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         answer_dict[answer] += score[-1]
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'prm-prod-vote-mean':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         answer_dict[answer] += np.prod(score[1:])
-    #     answer_count = Counter([answer for answer in only_answer_outputs])
-    #     for answer in answer_dict:
-    #         answer_dict[answer] /= answer_count[answer]
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'prm-mean-vote-mean':
-    #     answer_dict = defaultdict(float)
-    #     for answer, score in zip(only_answer_outputs, values):
-    #         answer_dict[answer] += np.mean(score[1:])
-    #     answer_count = Counter([answer for answer in only_answer_outputs])
-    #     for answer in answer_dict:
-    #         answer_dict[answer] /= answer_count[answer]
-    #     final_answer = max(answer_dict, key=answer_dict.get)
-    # elif method == 'max':
-    #     if isinstance(values[0], list):
-    #         # score = score[-1]
-    #         values = [value[-1] for value in values]
-    #     answer_dict = defaultdict(float)
-    #     pairs = list(zip(only_answer_outputs, values))
-    #     final_answer = max(pairs, key=lambda x: x[1])[0]
-    # else:
-    #     raise NotImplementedError
+
     return final_answer, answer_dict
 
 @contextmanager
@@ -503,9 +421,3 @@ def add_proxy():
         os.environ['http_proxy'] = os.environ['HTTP_PROXY'] = os.environ['https_proxy'] = os.environ['HTTPS_PROXY'] = ''
         
 
-if __name__ == "__main__":
-    # data = client.read_jsonl("s3://syj_test/test.jsonl")
-    # print(data, type(data), type(data[0]))
-    files = client.listdir("s3://syj_test/datasets/medical_train/llama38b_sc16_vllm_mmed_en_trainfilter-random-iter/")
-    print(files)
-    

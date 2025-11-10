@@ -2,15 +2,14 @@
 
 
 #SBATCH -J prm
-#SBATCH --partition=medai_llm
+#SBATCH --partition=medai_llm_p
 #SBATCH -N1
 #SBATCH --quotatype=auto
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:8
 #SBATCH --cpus-per-task=16
 #SBATCH --ntasks-per-node=1    
 #SBATCH --mem-per-cpu=6G  
 #SBATCH --time=5-00:00:00
-#SBATCH -x SH-IDC1-10-140-0-221
 ###SBATCH --kill-on-bad-exit=1
 
 nodes=( $( scontrol show hostnames $SLURM_JOB_NODELIST ) )
@@ -18,7 +17,7 @@ nodes_array=($nodes)
 head_node=${nodes_array[0]}
 head_node_ip=$(srun -N1 -n1 -w "$head_node" hostname --ip-address)
 
-GPUS_PER_NODE=4
+GPUS_PER_NODE=8
 NNODES=$SLURM_NNODES
 
 
@@ -60,12 +59,18 @@ if [[ "$other_params" != *"--learning_rate"* ]]; then
 fi
 
 if [[ "$other_params" != *"--use_peft"* ]]; then 
-    batch_size=2
-else
     batch_size=4
+else
+    batch_size=8
+
 fi
 
-bash /mnt/petrelfs/jiangshuyang.p/add_oss.sh
+if [[ "$other_params" != *"--lora_r"* ]]; then 
+    argv+=("--lora_r" "32")
+    argv+=("--lora_alpha" "64")
+fi
+
+# bash /mnt/petrelfs/jiangshuyang/add_oss.sh
 
 srun --jobid $SLURM_JOBID python -u -m torch.distributed.run \
     --nproc_per_node $GPUS_PER_NODE \
@@ -76,6 +81,7 @@ srun --jobid $SLURM_JOBID python -u -m torch.distributed.run \
     Evol_Instruct/training/prm_train.py \
     --data_path $DATA_PATH \
     --deepspeed $deep_speed_path \
+    --lora_target_modules q_proj k_proj v_proj o_proj up_proj down_proj gate_proj \
     --lora_task_type "TOKEN_CLS" \
     --model_name_or_path $MODEL_PATH \
     --tuned_lora_path $previous_lora_path \
@@ -86,7 +92,7 @@ srun --jobid $SLURM_JOBID python -u -m torch.distributed.run \
     --gradient_accumulation_steps 4 \
     --logging_steps 1 \
     --save_strategy "steps" \
-    --save_steps 100 \
+    --save_steps 1024 \
     --save_total_limit 1 \
     --eval_strategy "steps" \
     --eval_steps 100 \
@@ -98,6 +104,4 @@ srun --jobid $SLURM_JOBID python -u -m torch.distributed.run \
     --gradient_checkpointing True \
     --dataset_num_proc 16 \
     --report_to wandb \
-    --test_split_ratio 0.1 \
-    --lora_r 64 --lora_alpha 128 \
     ${argv[@]}

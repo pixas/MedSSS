@@ -1,10 +1,21 @@
-from pyexpat import model
-from datasets import Dataset
+
+
+import time
+from datasets import Dataset, load_from_disk, DatasetDict
+from queue import PriorityQueue, Queue
+import shutil
+import os 
+from tqdm import tqdm
 from Evol_Instruct import client, logger
+import tempfile
+import uuid
 import pathlib
 from dataclasses import dataclass, field
 import torch
-from datasets import load_dataset
+from accelerate import PartialState
+from Evol_Instruct.MCTS.tree_node import MedMCTSNode
+from Evol_Instruct.training.value_train import uniform_sample, shuffle_list, print_on_main
+
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 from trl import (
@@ -38,16 +49,200 @@ def return_prompt_and_responses(samples, tokenizer):
         "rejected": [sample[0]['content'] for sample in samples['rejected']]
     }
 
-def obtain_dataset(data_path, tokenizer):
-    # rank0_print(f"Train data path: {data_path}")
-    # print("Train data path: ", data_path)
-    data = client.read(data_path)
-    # print(data)
-    dataset = Dataset.from_list(data)
-    original_columns = dataset.column_names
-    process_func = partial(return_prompt_and_responses, tokenizer=tokenizer)
-    dataset = dataset.map(process_func, batched=True, remove_columns=original_columns)
+def trace_value(node):
+    value_list = []
+    cur = node
+    while cur:
+        value_list.append(cur.value)
+        cur = cur.parent
+    value_list = value_list[:-1]
+    return min(value_list)
+
+def ls_obtain_dataset(data, tokenizer, training_args):
+    # use level search to group the step-level DPO data
+    # chosen and rejected only happens with the same depth
+    # also, should try to make that the parent of chosen node should be different from the parent of rejected node
+    finish_cnt = 2
+    new_data = []
+    for item in tqdm(data, desc="Processing data", disable=local_rank != 0, total=len(data)):
+        if len(item['pos']) == 0 or len(item['neg']) == 0:
+            continue 
+        tree = MedMCTSNode.from_list(item)
+        queue = Queue()
+        queue.put(tree)
+        visited = set()
+        finished_set = set()
+        finish_nodes = []
+        while not queue.empty():
+            node_list = []
+            while not queue.empty():
+                node = queue.get()
+                if node in visited:
+                    continue
+                visited.add(node)
+                node_list.append(node)
+            # select chosen and rejected from the node_list 
+            for i in range(len(node_list)):
+                for j in range(i + 1, len(node_list)):
+                    if abs(node_list[i].value - node_list[j].value) > 0.8 and node_list[i].parent != node_list[j].parent and len(node_list[i].parent.children) > 1 and len(node_list[j].parent.children) > 1:
+                        large_node = max(node_list[i], node_list[j], key=lambda x: x.value)
+                        small_node = min(node_list[i], node_list[j], key=lambda x: x.value)
+                        new_data.append({
+                            "chosen": [{"role": "assistant", "content": large_node.obtain_reasoning_steps()[0] }],
+                            "rejected": [{"role": "assistant", "content": small_node.obtain_reasoning_steps()[0] }],
+                            "prompt": [{"role": "user", "content": large_node.problem}]
+                        })
+                        if large_node.children == [] and small_node.children == []:
+                            # a finish node has been added to training list, mark it as visited
+                            finished_set.add((large_node, small_node))
+                            # finished_set.add(small_node)
+            for node in node_list:
+                # if node.parent is not None and node.parent.value - node.value > 0.3:
+                #     new_data.append({
+                #         "chosen": [{"role": "assistant", "content": node.parent.obtain_reasoning_steps()[0] }],
+                #         "rejected": [{"role": "assistant", "content": node.obtain_reasoning_steps()[0] }],
+                #         "prompt": [{"role": "user", "content": node.parent.problem}]
+                #     })
+                for child in node.children:
+                    if child.type == 'Finish':
+                        finish_nodes.append(child)
+                    queue.put(child)
+        # finish pair 
+        finish_node_trace = [trace_value(node) for node in finish_nodes]
+        correct_finish_nodes = [(finish_node_trace[i], finish_node) for i, finish_node in enumerate(finish_nodes) if finish_node.value == 1.0]
+        
+        incorrect_finish_nodes = [(finish_node_trace[i], finish_node) for i, finish_node in enumerate(finish_nodes) if finish_node.value == 0.0]
+        
+        correct_finish_nodes = sorted(correct_finish_nodes, key=lambda x: x[0], reverse=True)
+        incorrect_finish_nodes = sorted(incorrect_finish_nodes, key=lambda x: x[0], reverse=False)
+
+        # finish_nodes = sorted(finish_nodes, key=lambda x: x.value, reverse=True)
+            
+        for i in range(len(correct_finish_nodes)):
+            for j in range(len(incorrect_finish_nodes)):
+
+
+                larger_trace, large_node = correct_finish_nodes[i]
+                smaller_trace, small_node = incorrect_finish_nodes[j]
+                
+
+                
+                if (large_node, small_node) in finished_set:
+                    continue
+                if (larger_trace - smaller_trace) <= 0.8:
+                    continue
+                new_data.append({
+                    "chosen": [{"role": "assistant", "content": large_node.obtain_reasoning_steps()[0] }],
+                    "rejected": [{"role": "assistant", "content": small_node.obtain_reasoning_steps()[0] }],
+                    "prompt": [{"role": "user", "content": large_node.problem}]
+                })
+    return new_data
+
+
+def dfs_obtain_dataset(data, tokenizer, training_args):
+    train_pair_per_instance = -1
+    new_data = []
+    for item in data:
+        if len(item['pos']) == 0 or len(item['neg']) == 0:
+            continue 
+        tree = MedMCTSNode.from_list(item)
+        # for each node, if it has more than 1 child, select the highest value and lowest value 
+        # node = tree
+        stack = [tree]
+        priority_queue = PriorityQueue()
+        visited = set()
+        while stack:
+            node = stack.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            # print_on_main(len(stack), flush=True)
+            if len(node.children) > 1:
+                higher_node = max(node.children, key=lambda x: x.value)
+                lower_node = min(node.children, key=lambda x: x.value)
+                if higher_node.value > lower_node.value:
+                    if len(higher_node.children) == 0:
+                        # a finish node has been added to training list, mark it as visited
+                        visited.add(higher_node)
+                    if len(lower_node.children) == 0:
+                        # a finish node has been added to training list, mark it as visited
+                        visited.add(lower_node)
+                    new_data.append({
+                        "chosen": [{"role": "assistant", "content": higher_node.obtain_reasoning_steps()[0] }],
+                        "rejected": [{"role": "assistant", "content": lower_node.obtain_reasoning_steps()[0] }],
+                        "prompt": [{"role": "user", "content": node.problem}]
+                    })
+                stack.extend(node.children)
+            elif len(node.children) == 1:
+                # only one child, select the child 
+                stack.append(node.children[0])
+                
+            else:
+                # enqueue priority_queue by the minimum value from root to current
+                value_list = []
+                cur = node
+                while cur:
+                    value_list.append(cur.value)
+                    cur = cur.parent
+                value_list = value_list[:-1]
+                priority_queue.put((-min(value_list), node))
+
+        # get first train_pair_per_instance items and last train_pair_per_instance from the queue
+        queue = priority_queue.queue
+        correct_node = [node for val, node in queue if node.value == 1.0]
+        incorrect_node = [node for val, node in queue if node.value == 0.0]
+        # shuffle_list(correct_node)
+        # shuffle_list(incorrect_node)
+        # get first train_pair_per_instance items and last train_pair_per_instance from the queue
+        if train_pair_per_instance == -1:
+            train_pair_per_instance = min(len(correct_node), len(incorrect_node))
+        else:
+            train_pair_per_instance = min(min(len(correct_node), len(incorrect_node)), train_pair_per_instance)
+
+        for i in range(train_pair_per_instance):
+            new_data.append(
+                {
+                    "chosen": [{"role": "assistant", "content": correct_node[i].obtain_reasoning_steps()[0] }],
+                    "rejected": [{"role": "assistant", "content": incorrect_node[-i-1].obtain_reasoning_steps()[0] }],
+                    "prompt": [{"role": "user", "content": correct_node[i].problem}],
+                }
+                
+            )
+        
+    return new_data 
+
+
+
+def obtain_dataset_each(data, tokenizer, training_args, script_args):
+    if script_args.data_process_method == "dfs":
+        new_data = dfs_obtain_dataset(data, tokenizer, training_args)
+    elif script_args.data_process_method == "ls":
+        new_data = ls_obtain_dataset(data, tokenizer, training_args)
+    
+            
+    dataset = Dataset.from_list(new_data)
+    with PartialState().local_main_process_first():
+        dataset = dataset.filter(lambda x: len(tokenizer.apply_chat_template(x["prompt"]+x['chosen'], tokenize=True)) <= training_args.max_length and len(tokenizer.apply_chat_template(x["prompt"]+x['rejected'], tokenize=True)) <= training_args.max_length, num_proc=training_args.dataset_num_proc)
+    # original_columns = dataset.column_names
+    # process_func = partial(return_prompt_and_responses, tokenizer=tokenizer)
+    # dataset = dataset.map(process_func, batched=True, remove_columns=original_columns)
     return dataset
+
+
+def obtain_dataset(data_path, tokenizer, training_args, script_args):
+    total_data = client.read(data_path)
+    split_ratio = script_args.test_split_ratio
+    # shuffle_list(total_data)
+    test_num = int(len(total_data) * split_ratio)
+    test_data = uniform_sample(total_data, test_num)
+    train_data = [item for item in total_data if item not in test_data]
+    # train_data = total_data[:-test_num]
+    # test_data = total_data[-test_num:]
+    
+    train_dataset = obtain_dataset_each(train_data, tokenizer, training_args, script_args)
+    test_dataset = obtain_dataset_each(test_data, tokenizer, training_args, script_args)
+    
+    return {"train": train_dataset, "test": test_dataset}
 
 def load_model(model_path):
     model = AutoModelForCausalLM.from_pretrained(model_path)
@@ -71,11 +266,13 @@ def split_dataset(dataset: Dataset, test_size=0.1):
 # class ModelConfiguration(ModelConfig):
 @dataclass
 class DPOScriptArguments(ScriptArguments):
+    dataset_name: str = field(metadata={"help": "The name of the dataset to use."}, default=None)
     data_path: str = field(metadata={"help": "Path to the data file."}, default=None)
     test_split_ratio: float = field(metadata={"help": "Ratio of the test split."}, default=0.1)
     
     # if load a lora-tuned sft model
-    tuned_lora_path: str = field(metadata={"help": "Path to the lora-tuned model."}, default=None)
+    tuned_lora_path: list[str] = field(metadata={"nargs": "+", "help": "Path to the lora-tuned model."}, default_factory=list)
+    data_process_method: str = field(metadata={"help": "Method to process the data."}, default="dfs")
 
 if __name__ == "__main__":
     parser = TrlParser((DPOScriptArguments, DPOConfig, ModelConfig))
@@ -101,10 +298,14 @@ if __name__ == "__main__":
     model = AutoModelForCausalLM.from_pretrained(
         model_config.model_name_or_path, trust_remote_code=model_config.trust_remote_code, **model_kwargs
     )
-    if script_args.tuned_lora_path:
-        model = PeftModel.from_pretrained(model, script_args.tuned_lora_path)
-        model = model.merge_and_unload()
-        rank0_print("Merging pre-trained SFT Lora params")
+    model_dtype = model.dtype
+    print_on_main(script_args.tuned_lora_path)
+    if script_args.tuned_lora_path is not None and script_args.tuned_lora_path != ["None"]:
+        for lora_path in script_args.tuned_lora_path:
+            model = PeftModel.from_pretrained(model, lora_path)
+            model = model.merge_and_unload()
+            print_on_main(f"Load lora weights from {lora_path}")
+        model = model.to(model_dtype)
     peft_config = get_peft_config(model_config)
     if peft_config is None:
         ref_model = AutoModelForCausalLM.from_pretrained(
@@ -129,8 +330,11 @@ if __name__ == "__main__":
     # Dataset
     ################
     # dataset = load_dataset(script_args.dataset_name)
-    dataset = obtain_dataset(script_args.data_path, tokenizer)
-    dataset = split_dataset(dataset, script_args.test_split_ratio)
+    state = PartialState()
+    temp_dir = None
+
+    dataset = obtain_dataset(script_args.data_path, tokenizer, training_args, script_args)
+    dataset = DatasetDict(dataset)
     assert script_args.dataset_train_split in dataset, f"{script_args.dataset_train_split} not in dataset"
     ##########
     # Training
@@ -143,9 +347,8 @@ if __name__ == "__main__":
             train_dataset=dataset[script_args.dataset_train_split],
             eval_dataset=dataset[script_args.dataset_test_split],
             # processing_class=tokenizer,
-            tokenizer=tokenizer,
+            processing_class=tokenizer,
             peft_config=peft_config,
-            max_length=training_args.max_length,
         )
         if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
             trainer.train(resume_from_checkpoint=True)

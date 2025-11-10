@@ -5,8 +5,7 @@ from typing import Any
 from openai import chat
 
 from Evol_Instruct.MCTS.tree_node import MedMCTSNode
-from Evol_Instruct.MCTS.utils import extract_template
-from Evol_Instruct.evaluation.generate_utils import infer_answer
+
 from Evol_Instruct.models.vllm_support import VLLMServer, chat_prompt
 from Evol_Instruct.prompts.prompt_template import mcts_prompts
 from Evol_Instruct.prompts.examples import *
@@ -45,26 +44,22 @@ class Reason(BaseAction):
             action_name=action_name,
             action_desc=action_desc,
         )
-        # self.details = "Review all prior reasoning steps and identify the **next single reasoning step** to continue progressing the analysis or deduction. Generate this next step in a not-verbose, concise manner that aligns with the problem's intent and focus on just one-step. Follow the format in <steps> block to provide the next reasoning step.\n"
+        
         self.details = "Think critically about the problem and answer with concise, accurate reasoning. Please ensure your reasoning is thorough and elaborate, breaking down each step of your thought process.\n"
     
     def call_prompt(self, node: MedMCTSNode, few_shot=0) -> str:
         prompt = self.details
         if few_shot > 0:
-            # few_shot_prompt = "<example>\n" + "\n\n".join(mcts_example[:few_shot]) + "\n</example>\n\n"
             few_shot_prompt = "Reasoning Example:\n" + "\n\n".join(mcts_example[:few_shot]) + "\n\n"
         else:
             few_shot_prompt = ""
         prompt = few_shot_prompt + mcts_prompts['prefix'] + prompt + f"Problem: {node.problem}"
-        # prompt = few_shot_prompt + mcts_prompts['prefix'] + prompt + f"<problem>\n{node.problem}\n</problem>\n\n" + f"<steps>\n{node.obtain_reasoning_steps()[0]}\n</steps>\n\n" 
+
         return prompt
 
     def __call__(self, node: MedMCTSNode, server: VLLMServer, few_shot=0, first=True, pre_gen_texts=None, **kwargs):
         step_count = len(node.trace)
         if first:
-            # cur_prompt = self.call_prompt(node, few_shot=few_shot)
-            # cur_prompt = chat_prompt([cur_prompt], tokenizer=server.tokenizer)[0] + f"<steps>\nStep {step_count}:"
-            # kwargs['stop'] = ['</steps>', '\n\n']
             cur_prompt = self.call_prompt(node, few_shot=few_shot)
             cur_prompt = chat_prompt([cur_prompt], tokenizer=server.tokenizer)[0] + node.obtain_reasoning_steps()[0] + f"\n\nStep {step_count}:{'' if pre_gen_texts is None else pre_gen_texts}"
         else:
@@ -88,7 +83,7 @@ class Finish(BaseAction):
             action_name=action_name,
             action_desc=action_desc,
         )
-        # self.details = """Based on all previous reasoning steps, use **one"" step to derive the answer and conclude the task by stating: "The answer is {{answer}}". Follow the format in <steps> block to provide the next finish step."""
+
         self.details = """Use thorough and elaborate steps to complete your reasoning. Conclude the task by stating: "The answer is {{answer}}"."""
 
     def call_prompt(self, node: MedMCTSNode, few_shot=0) -> str:

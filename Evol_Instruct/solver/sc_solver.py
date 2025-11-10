@@ -1,10 +1,9 @@
-from Evol_Instruct.evaluation.eval_em import extract_answer_content
-from Evol_Instruct.models.vllm_support import VLLMServer, chat_prompt, vllm_clean_generate
+from Evol_Instruct.evaluation.eval_bench import extract_answer_content
+from Evol_Instruct.models.vllm_support import chat_prompt
 from Evol_Instruct.solver.base_solver import Solver
 from Evol_Instruct.utils.utils import AlpacaTaskItem
-from Evol_Instruct.evaluation.generate_utils import infer_answer
 from collections import Counter 
-import pdb
+
 
 
 class SCSolver(Solver):
@@ -43,12 +42,7 @@ class SCSolver(Solver):
             for i, index in enumerate(no_answer_index):
                 outputs[index] = answer_outputs[i]
         answer_outputs = outputs
-        # answer_outputs = self.infer_answer(
-        #     prompts,
-        #     outputs,
-        #     choices_word=self.choices_word,
-        #     cot_prompt=self.cot_prompt
-        # )
+
         batch = len(items)
         outputs = [[answer_outputs[i * n + j] for j in range(n)] for i in range(batch)] 
         
@@ -63,27 +57,3 @@ class SCSolver(Solver):
         
         
         return items
-
-if __name__ == "__main__":
-    from transformers import AutoTokenizer
-    tokenizer = AutoTokenizer.from_pretrained('/mnt/hwfile/medai/LLMModels/Model/Meta-Llama-3-8B-Instruct')
-    server = VLLMServer(url='http://10.140.1.163:10002', 
-                        model='/mnt/hwfile/medai/LLMModels/Model/Meta-Llama-3-8B-Instruct',
-                        tokenizer = tokenizer)
-    
-    solver = SCSolver(server, 'temp.jsonl', ['A', 'B', 'C'])
-    
-    items = [
-        AlpacaTaskItem(
-            {
-                "id": "1",
-                "conversations": [
-                    {"from": 'user', "value": "What is the capital of China?\nA. Beijing\nB. Shanghai\nC. Chengdu"},
-                ],
-                "eval": {
-                    "answer": 'Beijing'
-                }
-            }
-        )
-    ]
-    output = solver.generate_response(items)

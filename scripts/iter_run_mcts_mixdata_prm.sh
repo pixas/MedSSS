@@ -1,5 +1,5 @@
 MAINTAIN_STRATEGY=all
-# SAMPLING_NUMBER=3
+
 SAMPLING_NUMBER=16
 model_base="$1"
 if [ -z "$model_base" ]; then 
@@ -7,8 +7,7 @@ if [ -z "$model_base" ]; then
 fi
 
 BASE_PATH=<checkpoint_parent_dir>
-# TASK_PATH=s3://syj_test/datasets/medical_train
-# oss_path=${BASE_PATH}/oss/datasets/medical_train
+
 TASK_PATH=${BASE_PATH}/oss/datasets/medical_train
 
 MODEL_PATH=meta-llama/Llama-3.1-8B-Instruct

@@ -1,33 +1,24 @@
 import argparse
-import torch
+
 import os
 import json
-from tqdm import tqdm, trange
+from tqdm import trange
 # import shortuuid
-from evalplus.data import get_human_eval_plus
-from evalplus.data import get_mbpp_plus
-from collections import Counter, defaultdict
-from Evol_Instruct.MCTS.tree import MCTS, MCTSConfig
+
 from Evol_Instruct.solver.cot_solver import CoTSolver
-from Evol_Instruct.solver.dpo_judge_solver import DPOJudgeSolver
-from Evol_Instruct.solver.mcts_solver import MCTSSolver
+
 from Evol_Instruct.solver.sc_solver import SCSolver
-# from Evol_Instruct.utils.conversations import conv_templates, SeparatorStyle
-# from Evol_Instruct.evaluation.eval_em import extract_answer_content
+
 from Evol_Instruct.models.builder import load_dpo_model, load_pretrained_model, load_value_model
-from Evol_Instruct.solver.sc_vm_solver import SCVMSolver
+
 from Evol_Instruct.utils.utils import disable_torch_init, get_model_name_from_path, get_chunk
-from Evol_Instruct.evaluation.generate_utils import task_specific_prompt_mapping, CustomDataset, infer_answer, set_tokenizer
-# from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
-from torch.utils.data import Dataset, DataLoader
+from Evol_Instruct.evaluation.generate_utils import task_specific_prompt_mapping, CustomDataset, set_tokenizer
+
+from torch.utils.data import DataLoader
 import pandas as pd 
 from Evol_Instruct import client
 from copy import deepcopy
-# from PIL import Image
-import math
 
-from Evol_Instruct.models.vllm_support import vllm_clean_generate
-import numpy as np
 
 
 
@@ -49,10 +40,10 @@ def convert_to_json(questions):
 
 
 
-four_choices_datasets = ["logiqa_en_cot", "mmedbench_en_cot", "mmlu_cot", "sat_math_cot", "mmlu_math_cot", "mmedbench_zh_cot", "medmcqa_cot", 'logiqa_en_prompt_cot', "mmedbench_en_prompt_cot", "mmlu_prompt_cot", 'med_mmlu_cot', 'MedMCQA_cot']
-five_choices_datasets = ['commonsense_qa_cot', "CMExam_zh_cot", "medqa_cot", 'commonsense_qa_prompt_cot', "MedQA_cot"]
-three_choices_datasets = ['pubmedqa_cot', 'pubmedqa_c_cot', 'pubhealth']
-two_choices_datasets = ['winogrande_cot', 'bioasq']
+four_choices_datasets = ['med_mmlu', 'MedMCQA']
+five_choices_datasets = ["MedQA_cot"]
+three_choices_datasets = ['pubmedqa', 'pubhealth']
+two_choices_datasets = ['bioasq']
 
 
 class Generation:
@@ -78,7 +69,7 @@ class Generation:
         elif self.dataset_name in three_choices_datasets:
 
             choices_word = ['A', 'B', 'C']
-        elif self.dataset_name in ['winogrande_cot', 'bioasq']:
+        elif self.dataset_name in two_choices_datasets:
             choices_word = ['A', 'B']
         elif self.dataset_name in ['biomrc']:
             choices_word = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -97,47 +88,19 @@ class Generation:
         else:
             infer_answer_max_tokens = None
             
-        if self.args.sampling_strategy in ['greedy', 'dpo_greedy']:
+        if self.args.sampling_strategy in ['greedy']:
             self.solver = CoTSolver(self.server, 
                                     self.ans_file, choices_word=choices_word,
                                     cot_prompt=self.dataset.cot_prompt,
                                     infer_answer_max_tokens=infer_answer_max_tokens
                                     )
-        elif self.args.sampling_strategy in ['sc', 'dpo_sc']:
+        elif self.args.sampling_strategy in ['sc']:
             self.solver = SCSolver(self.server, 
                                     self.ans_file, choices_word=choices_word,
                                     cot_prompt=self.dataset.cot_prompt,
                                     infer_answer_max_tokens=infer_answer_max_tokens
                                     )
-        elif self.args.sampling_strategy == 'dpo_judge':
-            self.solver = DPOJudgeSolver(self.server,
-                                        self.ans_file, choices_word=choices_word,
-                                        dpo_model=self.dpo_model,
-                                        dpo_select_method=args.dpo_select_method,
-                                        cot_prompt=self.dataset.cot_prompt,
-                                        infer_answer_max_tokens=infer_answer_max_tokens)
-        elif self.args.sampling_strategy == 'mcts':
-            config = client.read(args.mcts_config)
-            self.mcts_config = MCTSConfig(config)
-            if args.sampling_numbers != 1:
-                self.mcts_config.expand.max_children = args.sampling_numbers
-                print(f"Set max_children to {args.sampling_numbers}")
-            self.solver = MCTSSolver(self.server,
-                                     self.ans_file, value_model=self.value_model,
-                                     mcts_config=self.mcts_config,
-                                     cot_prompt=self.dataset.cot_prompt,
-                                     infer_rule=args.infer_rule,
-                                     choices_word=choices_word,
-                                     infer_answer_max_tokens=infer_answer_max_tokens)
-        elif self.args.sampling_strategy == 'scvm':
-            
-            self.solver = SCVMSolver(self.server,
-                                     self.ans_file, value_model=self.value_model,
-                                     infer_rule=args.infer_rule,
-                                     choices_word=choices_word,
-                                     cot_prompt=self.dataset.cot_prompt,
-                                     infer_answer_max_tokens=infer_answer_max_tokens)
-            
+
     
     def infer(self):
         args = self.args
@@ -157,29 +120,20 @@ class Generation:
         
     def initialize(self, args):
         dataset_name = args.question_file.split("/")[-1].split(".")[0]
-        if args.question_file.split("/")[-1].split(".")[0] in ["mmedbench_zh", "ceval", "cmmlu", "race_high", "race_middle", "mmedbench_en", "mmlu", "arc", "winogrande"]:
-            args.use_logit_bias = True
+
 
         print(args)
         
 
-        if dataset_name == "mbpp_plus":
-            
-            questions = get_mbpp_plus()
-            questions = [{"prompt": problem['prompt'], "task_id": task_id} for task_id, problem in questions.items()]
-        elif dataset_name == "humaneval_plus":
-            questions = get_human_eval_plus()
-            # print(questions)
-            questions = [{"prompt": problem['prompt'], "task_id": task_id} for task_id, problem in questions.items()]
+
+        if args.question_file.endswith(".csv"):
+            questions = pd.read_csv(args.question_file)
+            questions = convert_to_json(questions)
+        elif args.question_file.endswith(".jsonl"):
+            questions = client.read_jsonl(os.path.expanduser(args.question_file))
         else:
-            if args.question_file.endswith(".csv"):
-                questions = pd.read_csv(args.question_file)
-                questions = convert_to_json(questions)
-            elif args.question_file.endswith(".jsonl"):
-                questions = client.read_jsonl(os.path.expanduser(args.question_file))
-            else:
-                # a json file
-                questions = client.read_json(os.path.expanduser(args.question_file))
+            # a json file
+            questions = client.read_json(os.path.expanduser(args.question_file))
         questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
         answers_file = os.path.expanduser(args.answers_file)
         if os.path.dirname(answers_file) != "":
@@ -268,12 +222,10 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--max-new-tokens", type=int, default=3072)
     parser.add_argument("--top_p", type=float, default=0.95)
-    parser.add_argument("--num_beams", type=int, default=1)
+
     
-    parser.add_argument('--sampling_strategy', type=str, default='greedy', choices=['greedy', 'sc', 'dpo_judge', 'mcts', 'dpo_sc', 'dpo_greedy', 'scvm'])
-    parser.add_argument('--dpo_model_path', type=str, default=None)
-    parser.add_argument('--dpo_from', type=str, default='sft')
-    parser.add_argument('--dpo_select_method', type=str, default='max')
+    parser.add_argument('--sampling_strategy', type=str, default='greedy', choices=['greedy', 'sc'])
+    
     parser.add_argument('--sampling_numbers', type=int, default=1)
     
     parser.add_argument('--mcts_config', type=str, default='Evol_Instruct/config/default_config.json')
@@ -283,18 +235,16 @@ if __name__ == "__main__":
     parser.add_argument('--value_model_type', type=str, default='orm', choices=['orm', 'prm'])
     parser.add_argument("--infer_rule", default="max", type=str)
     
-    parser.add_argument("--ada-output-molora", action="store_true")
-    parser.add_argument("--add-layer-index", type=int, default=0)
+
     parser.add_argument("--infer-answer", action="store_true")
-    parser.add_argument("--only-load", type=str, default=None)
-    parser.add_argument("--use-loracl", action="store_true")
+
+
     parser.add_argument('--batch-size', type=int, default=8)
     
     
 
     args = parser.parse_args()
-    # if args.sampling_strategy != 'greedy':
-    #     args.answers_file = args.answers_file.split("/")[-2] + f"/{args.sampling_strategy}/" + args.answers_file.split("/")[-1]
+
     generator = Generation(args)
     generator.infer()
     # eval_model(args)
