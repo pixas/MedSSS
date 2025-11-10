@@ -1,7 +1,7 @@
 # MedSSS
 
 <p align="center">
-📃 <a href="" target="_blank">Paper</a> ｜🤗 <a href="https://huggingface.co/pixas/MedSSS_Policy" target="_blank">MedSSS-8B-Policy</a> ｜🤗 <a href="https://huggingface.co/pixas/MedSSS_PRM" target="_blank">MedSSS-8B-PRM</a> | 📚 <a href="https://huggingface.co/datasets/pixas/MedSSS-data" target="_blank">SFT/PRM Data</a>
+📃 <a href="http://arxiv.org/abs/2501.12051" target="_blank">Paper</a> ｜🤗 <a href="https://huggingface.co/pixas/MedSSS_Policy" target="_blank">MedSSS-8B-Policy</a> ｜🤗 <a href="https://huggingface.co/pixas/MedSSS_PRM" target="_blank">MedSSS-8B-PRM</a> | 📚 <a href="https://huggingface.co/datasets/pixas/MedSSS-data" target="_blank">SFT/PRM Data</a>
 </p>
 
 
@@ -21,6 +21,8 @@ It is built with the following three steps
 - Use PRM-Vote-Sum decoding method to generate several candidate responses and use PRM to select the most appropriate one.
 
 We open-sourced our models, data, and code here.
+
+**We are updating the training method, models, and the paper. The models here are old-fashioned. We will update them as soon as possible.**
 
 
 
