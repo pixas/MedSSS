@@ -3,9 +3,6 @@ from transformers import AutoConfig
 from peft import LoraConfig
 from vllm.lora.request import LoRARequest
 from openai import OpenAI
-import pdb
-import torch 
-from transformers import LogitsProcessor
 
 from Evol_Instruct.utils.utils import proxy_manager, LogitBiasProcess
 
@@ -91,21 +88,7 @@ def vllm_generate(model, tokenizer, prompts, wrap_chat=True, **sampling_params):
             # print(f"prompt: {prompt}, generated_text: {generated_text}")
             generated_texts.append(generated_text)
             break
-        # generated_text = output.outputs[0].text 
-        # # repeat = 0
-        # if "to create" in generated_text.lower() or "here is " in generated_text.lower() or "here's" in generated_text.lower():
-        #     new_sampled_params = sampling_params.clone()
-        #     new_sampled_params.n = 3
-        #     new_sampled_params.best_of = new_sampled_params.n
-        #     outputs = model.generate([prompt], new_sampled_params, use_tqdm=False)[0].outputs
-        #     for output in outputs:
-        #         if "to create" in output.text.lower() or "here is " in output.text.lower() or "here's" in output.text.lower():
-        #             continue
-        #         generated_text = output.text
-        #         break
-            # repeat += 1
-        # print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
-        # generated_texts.append(generated_text) 
+
     return generated_texts 
 
 
@@ -210,10 +193,3 @@ class VLLMServer:
         # pdb.set_trace()
         return generated_texts
 
-if __name__ == "__main__":
-    from transformers import AutoTokenizer
-    model_path = "/mnt/hwfile/medai/LLMModels/Model/Meta-Llama-3-8B-Instruct"
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    server = VLLMServer("http://10.140.0.170:10002", model_path, tokenizer)
-    output = server(["""You are a professional medical expert majored at reasoning in hard medical-related problems.\n\n<problem>\nA mother brings her 3-week-old infant to the pediatrician\'s office because she is concerned about his feeding habits. He was born without complications and has not had any medical problems up until this time. However, for the past 4 days, he has been fussy, is regurgitating all of his feeds, and his vomit is yellow in color. On physical exam, the child\'s abdomen is minimally distended but no other abnormalities are appreciated. Which of the following embryologic errors could account for this presentation?\nA. Abnormal migration of ventral pancreatic bud\nB. Complete failure of proximal duodenum to recanalize\nC. Abnormal hypertrophy of the pylorus\nD. Failure of lateral body folds to move ventrally and fuse in the midline\n</problem>\n\n<reasoning_steps>\nStep0: Let\'s break down this problem step by step.\n</reasoning_steps>\n\nGiven all previous reasoning steps, decide on the most suitable action to take next for solving the given problem:\n\n1. Reason: if the task requires further one-step reasoning or no previous reasoning steps available. Must choose this if no previous reasoning steps are available.\n2. Reflect: if the previous reasoning steps contain ambiguity or mistakes. Only choose "Reflect" if there are prior reasoning steps.\n3. Finish: if all reasoning steps are complete enough and a final answer can be provided. Only choose "Finish" if there are two or more reasoning steps.\nOutput your choice using the format: "The action is {{action}}." {{action}} can only takes \'Reason\', \'Reflect\', or \'Finish\'. Do not output other information."""], n=3, stop=["</steps>"])
-    

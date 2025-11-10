@@ -84,45 +84,20 @@ class CustomDataset:
 
         for i in range(index*bz, (index+1)*bz):
             if i < self.size:
-                # conv = self.conv.copy()
-                if self.dataset_name.endswith("plus"):
-                    question = self.questions[i]['prompt']
-                    if self.is_base: 
-                        if self.few_shot_samples == "":
-                            prompt = self.few_shot_samples + "Problem: " + question + "\n\nAnswer: The answer is "
-                        else:
-                            prompt = self.few_shot_samples + question + "\n</problem>\n\n<AnswerText> Let's think step by step. "
-                    else:
-                        prompt = question
-                    alpaca_item = {
-                        "id": f"{self.dataset_name}_{i}",
-                        "conversations": [
-                            {"from": "human", "value": prompt},
-                        ],
-                        "eval": self.questions[i]['task_id']
-                    }
-                    item = AlpacaTaskItem(alpaca_item, self.task_specific_prompt)
-                    # answers.append(None)
-                    items.append(item)
-                else:
-                    line = self.questions[i]
-                    question = line['conversations'][0]['value']
-                    # questions.append(question)
-                    if self.is_base: 
-                        if self.few_shot_samples == "":
-                            question = self.few_shot_samples + "Problem: " + question + "\n\nAnswer: "
-                        else:
-                            question = self.few_shot_samples  + "Problem: " + question + "\n\nAnswer:"
-                    else:
-                        if self.few_shot_samples != "":
-                            question = self.few_shot_samples + "Problem: " + question
-                        else:
-                            question = question 
 
-                    alpaca_item = line 
-                    alpaca_item['conversations'][0]['value'] = question
-                    item = AlpacaTaskItem(alpaca_item, self.task_specific_prompt)
-                    items.append(item)
+                line = self.questions[i]
+                question = line['conversations'][0]['value']
+
+                
+                if self.few_shot_samples != "":
+                    question = self.few_shot_samples + "Problem: " + question
+                else:
+                    question = question 
+
+                alpaca_item = line 
+                alpaca_item['conversations'][0]['value'] = question
+                item = AlpacaTaskItem(alpaca_item, self.task_specific_prompt)
+                items.append(item)
                     
         return items
 

@@ -1,7 +1,7 @@
-BASE_PATH=<parent_dir_of_checkpoints>
-TASK_PATH=evaluation_data
 
-domains=("MedQA_cot" "medsins_task16" "medsins_task29" "medsins_task130" "medsins_task131" "MedMCQA_cot" "med_mmlu_cot" "pubmedqa_c_cot" "bioasq" "pubhealth" "biomrc")
+TASK_PATH=/directory/of/test/set
+
+domains=(MedQA drugdose ddxplus seer pubmedqa MedMCQA "bioasq" "med_mmlu" "biomrc" "pubhealth" "healthfact")
 
  
 MODEL_BASE="$1"
@@ -24,14 +24,6 @@ for domain in "${domains[@]}"; do
     dir_path=${LOGS_BASE_PATH}/${DATASET}
     if [[ $SAMPLING_STRATEGY == "sc" ]]; then 
         dir_path=${dir_path}/sc-${SAMPLING_NUMBER}
-    elif [[ $SAMPLING_STRATEGY == "scvm" ]]; then 
-        dir_path=${dir_path}/scvm-${infer_rule}-${SAMPLING_NUMBER}
-    elif [[ $SAMPLING_STRATEGY == "dpo_judge" ]]; then 
-        dir_path=${dir_path}/dpo_judge-${dpo_from}-${dpo_select_method}-${SAMPLING_NUMBER}
-    elif [[ $SAMPLING_STRATEGY == "dpo_greedy" ]]; then 
-        dir_path=${dir_path}/dpo-greedy
-    elif [[ $SAMPLING_STRATEGY == "dpo_sc" ]]; then 
-        dir_path=${dir_path}/dpo-sc-${SAMPLING_NUMBER}
     else
         dir_path=${dir_path}/greedy
     fi

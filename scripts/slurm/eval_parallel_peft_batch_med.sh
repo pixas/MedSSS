@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -J eval_med_chunk
-#SBATCH --partition=medai_llm_p
+#SBATCH --partition=partition
 #SBATCH -N1
 #SBATCH --quotatype=reserved
 #SBATCH --gres=gpu:0

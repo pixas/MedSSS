@@ -2,7 +2,7 @@
 
 
 #SBATCH -J prm
-#SBATCH --partition=medai_llm_p
+#SBATCH --partition=partition
 #SBATCH -N1
 #SBATCH --quotatype=auto
 #SBATCH --gres=gpu:8
@@ -37,7 +37,7 @@ MODEL_PATH="$2"
 OUTPUT_PATH="$3"
 previous_lora_path="$4"
 other_params="$5"
-# --learning_rate --score_lr --learn_by_stage 
+
 
 
 if [ -z "$previous_lora_path" ]; then
@@ -70,7 +70,7 @@ if [[ "$other_params" != *"--lora_r"* ]]; then
     argv+=("--lora_alpha" "64")
 fi
 
-# bash /mnt/petrelfs/jiangshuyang/add_oss.sh
+
 
 srun --jobid $SLURM_JOBID python -u -m torch.distributed.run \
     --nproc_per_node $GPUS_PER_NODE \

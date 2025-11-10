@@ -33,13 +33,8 @@ SAMPLING_STRATEGY="$7"
 SAMPLING_NUMBER="$8"
 num_chunks=${9}
 chunk_idx=${10}
-dpo_model_path=${11:-"None"}
-dpo_from=${12:-"sft"}
-dpo_select_method=${13:-"max"}
-value_model_base=${14:-"None"}
-value_function=${15:-"None"}
-infer_rule=${16:-"None"}
-custom_name=${17}
+
+custom_name=${11}
 DATA_PATH=${TASK_PATH}/medical_test
 
 
@@ -86,17 +81,11 @@ srun --output=${dir_path}/infer-${num_chunks}-${chunk_idx}.log  python -m Evol_I
     --question-file ${DATA_PATH}/${DATASET}.json \
     --answers-file ${dir_path}/infer-${num_chunks}-${chunk_idx}.jsonl \
     --temperature $temperature \
-    --use-logit-bias \
     --batch-size $bs \
-    --value_model_base "${value_model_base}" \
     --sampling_numbers $SAMPLING_NUMBER \
     --sampling_strategy $SAMPLING_STRATEGY \
-    --dpo_model_path $dpo_model_path \
-    --dpo_select_method $dpo_select_method \
     --num-chunks $num_chunks \
     --chunk-idx $chunk_idx \
-    --value_function $value_function \
-    --infer_rule $infer_rule \
     --resume \
     ${argv[@]}
 
