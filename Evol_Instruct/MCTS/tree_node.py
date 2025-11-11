@@ -90,7 +90,7 @@ class MedMCTSNode(MCTSNode):
         return self.value < other.value 
     
     def is_correct(self, pred: str, answer: str):
-        # if answer in list("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+
         if len(answer) == 1:
             # indicate that this is a multiple-choice problem
             # remove any quote strings from the pred
@@ -240,57 +240,3 @@ class MedMCTSNode(MCTSNode):
             temp = temp.parent
         chain = chain[::-1]
         return chain
-
-class LSMCTSNode(MedMCTSNode):
-    def obtain_reasoning_steps(self):
-        trace_nodes = []
-        node = self
-        while node:
-            trace_nodes.append(node)
-            node = node.parent
-        trace_nodes = trace_nodes[::-1]
-        output_string = ""
-        for i, node in enumerate(trace_nodes):
-            output_string += f"{node.reasoning_step}"
-            
-        # output_string = output_string.strip("\n")
-        if output_string == "":
-            return "None"
-        return output_string, len(trace_nodes)
-
-    def eval_node(self, value_function=None, training=False):
-
-        self.is_completed = True
-        reasoning_history = self.obtain_reasoning_steps()[0]
-        if value_function is None:
-            answer = extract_template(reasoning_history, "answer")
-            if answer is None:
-                value = 0
-            else:
-                value = float(answer[0] in self.ground_truth)
-            simu_value = value
-        else:
-            # maybe the second iteration's training or inference
-            simu_value = None
-            if training:
-                answer = extract_template(reasoning_history, "answer")
-                if answer is None:
-                    simu_value = 0
-                else:
-                    simu_value = float(answer[0] in self.ground_truth)
-            value, _ = value_function(self, training=False)
-        return value, simu_value
-
-    def build_simu_prompt(self):
-        simulate_prompt = mcts_prompts['ls_simu_template'].format(
-            problem=self.problem,
-            # steps=self.obtain_reasoning_steps()[0],
-            # Simulate=mcts_prompts['Simulate']
-        )
-        return simulate_prompt
-    
-    
-    
-    def __repr__(self) -> str:
-
-        return f"Node: {self.reasoning_step}\nValue: {self.value}\nVisits: {self.visits}\nDepth: {self.depth}\nTrace: {self.trace}\nIsCompleted: {self.is_completed}"

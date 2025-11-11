@@ -11,7 +11,6 @@ iter=${7}
 NUM_CHUNKS=${8:-1}
 VALUE_FUNCTION=${9:-None}
 
-# echo "All parameters: $1, $2, $3, $4, $5, $6, $7, $8, $9, ${10}, ${11}, ${12}, ${13}, ${14}"
 OUTPUT_DIR=$(dirname "$OUTPUT_PATH")
 filename=$(basename "$OUTPUT_PATH")
 FILE_NAME="${filename%.*}"
@@ -21,7 +20,6 @@ filename=$(basename "$LOG_PATH")
 LOG_NAME="${filename%.*}"
 
 script_path=scripts/slurm/iter_self_gen_mcts_llama.sh
-critic_prefix=value
 
 
 

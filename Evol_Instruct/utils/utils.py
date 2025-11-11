@@ -4,7 +4,11 @@ import torch
 import numpy as np
 from collections import Counter, defaultdict
 import json
-from petrel_client.client import Client
+try:
+    from petrel_client.client import Client
+except:
+    Client = None
+    print("Warning: No installed s3 client. Please make sure that you only process files not saved as objects")
 import io
 import os 
 from functools import wraps
@@ -53,7 +57,10 @@ class CephOSSClient:
     
     @proxy_decorator
     def __init__(self, conf_path: str = "~/petreloss.conf") -> None:
-        self.client = Client(conf_path)
+        if Client is not None:
+            self.client = Client(conf_path)
+        else:
+            self.client = None
     
     @proxy_decorator
     def read_json(self, json_path, **kwargs):
@@ -178,10 +185,7 @@ class CephOSSClient:
         return data
 
     def read(self, path: str):
-        s3_prefix = "s3://syj_test"
-        local_prefix = "/mnt/petrelfs/jiangshuyang.p/oss"
-        if "local_prefix" in path:
-            path = path.replace(local_prefix, s3_prefix)
+
         mapping_processing = {
             "csv": self.read_csv,
             "json": self.read_json,
@@ -190,13 +194,8 @@ class CephOSSClient:
             "log": self.read_txt
         }
         suffix = path.split(".")[-1]
-        try:
-            return mapping_processing[suffix](path)
-        except:
-            s3_prefix = "s3://syj_test"
-            local_prefix = "/mnt/petrelfs/jiangshuyang.p/oss"
-            path = path.replace(local_prefix, s3_prefix)
-            return mapping_processing[suffix](path)
+        return mapping_processing[suffix](path)
+
     
     def write(self, data, path: str, **kwargs):
         mapping_processing = {
@@ -207,14 +206,9 @@ class CephOSSClient:
             "log": self.write_text
         }
         suffix = path.split(".")[-1]
-        try:
-            return mapping_processing[suffix](data, path, **kwargs)
-        except Exception as e:
-            print(e)
-            s3_prefix = "s3://syj_test"
-            local_prefix = "/mnt/petrelfs/jiangshuyang.p/oss"
-            path = path.replace(local_prefix, s3_prefix)
-            return mapping_processing[suffix](data, path, **kwargs)
+        
+        return mapping_processing[suffix](data, path, **kwargs)
+
 
     @proxy_decorator
     def listdir(self, path):

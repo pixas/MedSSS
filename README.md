@@ -36,12 +36,11 @@ We open-sourced our models, data, and code here.
 | **MedSSS-8B-Policy**  | LLaMA-3.1-8B  | English    | [HF Link](https://huggingface.co/pixas/MedSSS_Policy) |
 | **MedSSS-8B-PRM**  | LLaMA-3.1-8B  | English    | [HF Link](https://huggingface.co/pixas/MedSSS_PRM) |
 
+Please follow the Huggingface page to deploy the two models
 - **Deploy**
-
+f
 As the policy model and the PRM model are both LoRA adapters, you can deploy them with the same backbone `meta-llama/Llama-3.1-8B-Instruct`.
-Specifically, for policy model:
-
-```python
+Specifically, for policy model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 base_model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.1-8B-Instruct",torch_dtype="auto",device_map="auto")

@@ -75,7 +75,7 @@ def extract_answer_content(s, prefix='The answer is'):
         r"Final Answer[:\s]*([^\n]*)(?:\.|\n|$)",
         r"Final answer is([^\n]*)(?:\.|\n|$)"
     ]
-    matches = []
+
     match_by_pat = {}
     for pat in patterns:
         match_by_pat[pat] = []

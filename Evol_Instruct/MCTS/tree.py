@@ -1,32 +1,28 @@
 from collections import Counter, defaultdict
 from copy import deepcopy
 import math
-import time 
-from typing import Any, Callable, Union, Optional
+
+from typing import Any, Callable
 
 import numpy as np
 import re
-import torch
 
-from queue import PriorityQueue
+
 from Evol_Instruct.MCTS.utils import extract_template, parse_action_params
-from Evol_Instruct.actions.base_action import Finish, Reflect, Think, Reason, Refine
-from Evol_Instruct.evaluation.generate_utils import set_tokenizer
-# from Evol_Instruct.models.modeling_value_llama import LlamaForValueFunction
+from Evol_Instruct.actions.base_action import Finish, Reflect, Think, Refine
 
-from Evol_Instruct.utils.utils import compute_weighted_values, timeout_retry_decorator, LogitBiasProcess
+from Evol_Instruct.utils.utils import compute_weighted_values
 from Evol_Instruct.models.vllm_support import VLLMServer, chat_prompt
-from Evol_Instruct.prompts.prompt_template import mcts_prompts, search_prompts
-from transformers import LogitsProcessorList
-from Evol_Instruct import client, logger
+from Evol_Instruct.prompts.prompt_template import mcts_prompts
+
+from Evol_Instruct import logger
 from Evol_Instruct.MCTS.tree_node import MedMCTSNode
 from Evol_Instruct.actions.actions_register import ACTIONS_REGISTRY
-from Evol_Instruct.actions.base_action import BaseAction, base_actions
-from Evol_Instruct.actions.medrag import Medrag, RAGReason
+from Evol_Instruct.actions.base_action import base_actions
+
 # from Evol_Instruct.actions.hint import Hint
-from Evol_Instruct.MCTS.tree_register import register_tree, tree_registry
-import pickle
-import pdb
+from Evol_Instruct.MCTS.tree_register import register_tree
+
 
 class MCTSConfig:
     def __init__(self, data):
@@ -66,12 +62,10 @@ class MCTS:
             node = MedMCTSNode(item, reasoning_step=mcts_prompts['break_down'], index=0,
                                ground_truth="", refine_limit=config.refine_limit)
         self.root = node
-        # self.lora_request = lora_request
-        # self.constant = constant
+
         self.model_server = model_server
         self.tokenizer = self.model_server.tokenizer
-        # self.model = model
-        # self.tokenizer = tokenizer
+
         self.config = config
         self.constant = getattr(self.config.expand, "constant", 2)
         self.terminate_rule = getattr(self.config.terminate, "rule", "count")
@@ -95,9 +89,8 @@ class MCTS:
     def is_reflect_node(self, node):
         condition1 = node.value < 0.5 and node.visits > 0
         condition1 = node.visits > 0 and (node.value < node.parent.value) and node.depth > 1
-        condition2 = node.type != 'Medrag'
-        # condition3 = extract_template(node.reasoning_step, 'answer') is not None
-        return condition1 and condition2
+
+        return condition1 
         
     def post_init(self):
         
@@ -106,7 +99,7 @@ class MCTS:
             all_actions = []
 
             all_actions = {action_name: action() for action, action_type, action_name in ACTIONS_REGISTRY if action_type == 'base'}
-            # all_actions = [action() for action, action_type in ACTIONS_REGISTRY if action_type == 'base']
+            
             self.actions = all_actions
         else:
             all_actions = {}
@@ -140,46 +133,30 @@ class MCTS:
         text = answers[0]
         predict_idx = [extract_template(x, 'answer') for x in text]
         is_correct = [node.is_correct(x, node.ground_truth) if x is not None else False for x in predict_idx]
-        # is_correct = [x in node.ground_truth if x is not None else False for x in predict_idx ]
+        
         node.simulations = [int(x) for x in is_correct]
         accuracy = sum(is_correct) / len(is_correct)
         return accuracy, accuracy
 
     def value_func_simulation(self, node: MedMCTSNode, *args, **kwargs):
         trajectory = node.obtain_reasoning_steps()[0]
-        # if node.type == 'Finish':
-        #     trajectory = node.obtain_reasoning_steps()[0]
-        # else:
-        #     trajectory = node.obtain_reasoning_steps()[0]
-        
-        # value function will takes the trajectoy as input and output value 
+       
         conversation = [
             {"role": "user", "content": node.problem},
             # {"role": "assistant", "content": trajectory}
         ]
         text = self.tokenizer.apply_chat_template(conversation, tokenize=False, add_generation_prompt=True) + trajectory + "\n\n"
-        # assistant_content_index = text.index(trajectory)
-        # assistant_content_length = len(trajectory)
-        # text = text[:assistant_content_index + assistant_content_length] + "\n\n" + text[assistant_content_index + assistant_content_length:]
-        # eos_len = len(self.tokenizer.eos_token)
-        # text = text[:-eos_len] + "\n\n" + self.tokenizer.eos_token
+        
         
         tokens = self.tokenizer(text, return_tensors='pt', padding=True)
         tokens = {k: v.to(self.value_function.device) for k, v in tokens.items()}
         value = self.value_function(**tokens)
         value_model_score = value.item()
-        # tokens = self.tokenizer(trajectory, return_tensors='pt', padding=True)
-        # with torch.inference_mode():
-        #     value = self.value_function(**tokens)
-
-        # # if isinstance(self.value_function, LlamaForSequenceClassification)
-        # value_model_score = torch.sigmoid(value[0]).item()
-        # value_model_score = value[0].item()
+        
         simulation_score = None
         if self.training and node.type == 'Finish':
             simulation_score = node.eval_node()[1]
-        #     simulation_score, _ = self.direct_infer_simulation(node, self.config.simulation)
-            # value_model_score = (value_model_score + simulation_score) / 2
+        
         return value_model_score, simulation_score
 
     def max_depth(self, node: MedMCTSNode):
@@ -199,7 +176,6 @@ class MCTS:
         return all_nodes
     
     def base_terminate(self, node):
-        # pdb.set_trace()
         # terminate if all leaf nodes reach 'Finish' state
 
         if not node.children:
@@ -212,7 +188,7 @@ class MCTS:
             # state = state and self.base_terminate(child)
             if state == False:
                 return False
-        # node.is_completed = state
+
 
         return state
     
@@ -225,9 +201,7 @@ class MCTS:
         if hasattr(self.config.terminate, 'correct_nodes') and len(correct_leaves) >= self.config.terminate.correct_nodes:
             # note: this condition never satisfies during inference, because inference will never set correct nodes
             return True
-        # leaves = [leaf for leaf in self.obtain_leaves(self.root) if leaf.type == 'Finish']
-        # if not self.training and (len(self.finish_nodes) < getattr(self.config.terminate, "least_leaves", 16)):
-        #     return False
+    
         if self.terminate_rule == "depth":
             # depth = self.root.max_depth()
             depth = self.max_depth(self.root)
@@ -237,10 +211,7 @@ class MCTS:
             # count = self.root.total_node()
             count = self.total_node(self.root)
             if count >= self.config.terminate.max_nodes:
-                # finish_nodes = [node for node in self.obtain_leaves(self.root) if node.type == 'Finish']
-                # if len(finish_nodes) == 0 and :
-                #     self.config.terminate.max_nodes += 10
-                #     return False 
+                
                 return True 
         
         return False
@@ -253,8 +224,7 @@ class MCTS:
             
             child_node = self.select_child(node, self.constant)
             if child_node is None:
-                # pdb.set_trace()
-                # logger.debug(node.children)
+
                 return -1
             node = child_node
         
@@ -264,32 +234,20 @@ class MCTS:
             return
         if node.visits == 0 and node.depth == 0:
             # root
-            # logger.debug("Choose to expand due to root node")
             self.expand_node(node, 
                             max_children=self.config.expand.max_children,
                             bear_ratio=self.bear_ratio,
                             low_gate=self.low_gate, **sampling_params)
-        # elif node.visits == 0 and node.depth > 0:
-        #     if self.value_function is not None:
-        #         # inference mode
-        #         value, simulation_score = self.rollout(node, self.value_func_simulation)
-        #     else:
-        #         # pdb.set_trace()
-        #         value, simulation_score = self.rollout(node, self.direct_infer_simulation, simulation=self.config.simulation)
-        #     # logger.debug(f"Choose to rollout due to leaf node not visited, Value: {value}")
-        #     self.back_propagate(node,value, simulation_score)
         elif node.visits > 0 and node.depth > 0:
-            # logger.debug(f"Choose to expand {node} due to leaf node visited")
-            # pdb.set_trace()
+
             self.expand_node(node,
-                            #  lora_request=self.lora_request,
                              max_children=self.config.expand.max_children,
                              bear_ratio=self.bear_ratio,
                              low_gate=self.low_gate,  **sampling_params)
         # else:
         return 0
     
-    # @timeout_retry_decorator(timeout_duration=600)
+
     def run(self, **sampling_params):
         if len(self.model_server.tokenizer.encode(self.root.problem)) > 8192:
             return None
@@ -306,7 +264,6 @@ class MCTS:
             iter_time += 1
 
         # post process the tree
-        # pdb.set_trace()
         if self.value_function is None:
             value_function = None 
         else:
@@ -315,63 +272,7 @@ class MCTS:
         self.post_process(self.root, value_function=value_function, **sampling_params)
         return self.root   
 
-    def inference(self, select_rule='max', **kwargs):
-        # after run the MCTS, select the highest value node 
-        # node = self.root 
-        # while node.children:
-        #     child_node = self.select_child(node, self.constant, training=False)
-        #     # if child_node is None:
-        #     #     answer_prompt = 
-        #     node = child_node
-        
-        # reasoning_path = node.obtain_reasoning_steps()[0]
-        # leaves = self.obtain_leaves(self.root)
-        leaves = self.finish_nodes
-        if select_rule == 'max':
-            leaf = None
-            cur_value = -1
-            for single_leaf in leaves:
-                if single_leaf.value > cur_value:
-                    cur_value = single_leaf.value 
-                    leaf = single_leaf 
-            # best_node = leaf 
-            # node_step = leaf.obtain_reasoning_steps()[0]
-            return leaf, leaf.obtain_reasoning_steps()[0]
-        elif select_rule == 'level_max':
-            temp = self.root 
-            # for child in temp.children:
-            while temp.children:
-                # child_node = self.select_child(temp, 0)
-                child_node = max(temp.children, key=lambda x: x.value)
-                temp = child_node 
-            # best_node = temp 
-            # node_step = temp.obtain_reasoning_steps()[0]
-            return temp, temp.obtain_reasoning_steps()[0]
-
-        elif select_rule.startswith('vote-') or select_rule.startswith('prm-'):
-            leaves = [leaf for leaf in leaves if leaf.type == 'Finish']
-            only_answer_outputs = [extract_template(leaf.reasoning_step, 'answer') for leaf in leaves]
-            values = [[0] + leaf.value_trajectory for leaf in leaves] if select_rule.startswith('prm') else [leaf.value for leaf in leaves]
-            max_answer, weighted_values = compute_weighted_values(only_answer_outputs, values, select_rule)
-            
-            # max_answer = max(weighted_values, key=weighted_values.get)
-            max_weighted_value = weighted_values[max_answer]
-            tie_answers = [ans for ans, val in weighted_values.items() if abs(val - max_weighted_value) < 1e-6]
-            if len(tie_answers) == 1:
-                # 没有平局，直接选择 max_answer 对应的节点
-                # best_node = 
-                best_node =  max((node for node in leaves if extract_template(node.reasoning_step, 'answer') == max_answer), key=lambda n: n.value)
-            else:
-                best_node = None
-                best_value = float('-inf')
-                for leaf in leaves:
-                    if extract_template(leaf.reasoning_step, 'answer') in tie_answers and leaf.value > best_value:
-                        best_value = leaf.value 
-                        best_node = leaf
-            return best_node, best_node.obtain_reasoning_steps()[0]
-        elif select_rule == 'tot':
-            node = self.tot_inference(**kwargs)
-            return node, node.obtain_reasoning_steps()[0]
+    
 
             
             
@@ -402,11 +303,7 @@ class MCTS:
                     # this method will avoid A(1.0)->B(1.0)->C(1.0), because partial reasoning cannot be considered as 1.0
                     node.value = (node.value + sum(child.value * child.visits for child in node.children) / sum(child.visits for child in node.children) ) / 2
                 node.is_completed = all(child.is_completed for child in node.children if child is not None)
-                # node.value = (node.visits * node.value + child_mean_value) / (node.visits + 1)
-                # formula in https://arxiv.org/pdf/2406.07394
-                # node.value = 0.5 * (node.value + max([child.value for child in node.children]))
-                # node.value = 0.5 * (node.value + sum(child.value * child.visits for child in node.children) / \
-                    # sum(child.visits for child in node.children))
+
 
 
             node = node.parent
@@ -415,8 +312,7 @@ class MCTS:
         max_ucb = -1
         return_node = None
         constant_change = getattr(self.config.expand, 'constant_change', 'constant')
-        # if constant_change != 'constant':
-        #     constant = eval(constant_change)
+
         for child in node.children:
             if self.training:
                 value = child.value 
@@ -456,10 +352,8 @@ class MCTS:
         think_action = self.think_action
         # step_count = len(node.trace)
         if node.depth != 0:
-            if node.type == 'Medrag':
-                next_actions = ['Reason'] * max_children
-            else:
-                next_actions = think_action(node, self.model_server, **sampling_params)
+
+            next_actions = think_action(node, self.model_server, **sampling_params)
         # pdb.set_trace()
         else:
             next_actions = ['Reason'] * max_children
@@ -473,12 +367,11 @@ class MCTS:
         return final_actions
 
     def expand_node(self, node: MedMCTSNode, max_children=3, bear_ratio=0.9,
-                    low_gate=0.3, whether_expand_finish=True, defined_actions=None, **sampling_params):
+                    low_gate=0.3, defined_actions=None, **sampling_params):
         if node.is_completed and node.value < low_gate and node.refine_cnt < node.refine_limit:
             return 
         if node.children != []:
             return 
-        # logger.info(f"Select node: {node.trace}")
         if node.simulation_score is not None and node.simulation_score >= bear_ratio:
             # training
             max_children = 1
@@ -486,37 +379,17 @@ class MCTS:
         
         else:
             if node.depth == 0:
-                if "Medrag" in self.actions:
-                    next_actions = ['Medrag'] * len(getattr(getattr(self.config, "Medrag", {}), "source_list", ["MedCorp"]))
-                else:
-                    next_actions = self.normal_expand_node(node, max_children, **sampling_params)
-            else:
-                # if "Reflect" in self.actions:
-                #     # if node.value <= low_gate and node.visits > 0 and (node.type != 'Medrag'):
-                #     if self.is_reflect_node(node):
-                #         # a very bad node has already rollout, need to use reflect
 
-                #         action = 'Reflect'
-                        
-                #         n = max_children
-                        
-                #         next_actions = [action] * n
-                #         if getattr(self.config, "refine", False):
-                #             self.refine_node(node)
-                #     else:
-                #         next_actions = self.normal_expand_node(node, max_children, **sampling_params)
+                next_actions = self.normal_expand_node(node, max_children, **sampling_params)
+            else:
+                
                 if node.type == 'Finish' and node.value < low_gate and self.config.refine_limit > 0 and self.config.refine_limit > node.refine_cnt:
                     node.type = 'Reason'
                     node.is_completed = False
-                    # recursively set all parent nodes is_completed to False
-                    # current = node
-                    # while current.parent:
-                    #     current = current.parent
-                    #     current.is_completed = False
+
                     next_actions = ['Reflect']
                 else:
-                    if getattr(self.config, "refine", False):
-                        self.refine_node(node)
+
                     next_actions = self.normal_expand_node(node, max_children, **sampling_params)
             
         
@@ -527,10 +400,8 @@ class MCTS:
         #     return 
         if defined_actions is not None:
             next_actions = defined_actions
-        if "Medrag" in next_actions:
-            observations = self.multisource_rag(node, next_actions, **sampling_params)
-        else:
-            observations = self.step_observation(node, next_actions, **sampling_params)
+        
+        observations = self.step_observation(node, next_actions, **sampling_params)
         
     
         for i in range(len(next_actions)):
@@ -563,29 +434,8 @@ class MCTS:
             node.is_completed = True
         return
             
-    def refine_node(self, node: MedMCTSNode):
-        act_class = Refine()
-        temp = node
-        refine_max = getattr(self.config, "refine_max", 3)
-        while refine_max > 0 and temp.value <= self.low_gate:
-            temp = deepcopy(node)
-            new_step = act_class(node, self.model_server, few_shot=0, n=1, temperature=1)
-            temp.reasoning_step += "\nWait, I have made a mistakes in the previous steps. Let me refine it.\n" + new_step[0]
-            if self.value_function is not None:
-                
-                value, simulation_score = self.rollout(temp, self.value_func_simulation)
-            else:
-                value, simulation_score = self.rollout(temp, self.direct_infer_simulation, self.config.simulation)
-            temp.value = value 
-            refine_max -= 1
-        if refine_max == 0:
-            logger.info("refine failed, maintain node as its originality")
-        else:
-            logger.info("refine success, update the node value")
-            node.reasoning_step = temp.reasoning_step
+    
 
-    
-    
     def process_answer_nodes(self, node: MedMCTSNode, reasoning_step: str, whether_expand_finish: bool = True, refine_incre: int = 0):
         """
         Split a potentially multi‑step finish into intermediate 'Reason' nodes
@@ -698,7 +548,7 @@ class MCTS:
         leaves.sort(key=lambda x: x.value, reverse=True)
         for leaf in leaves:
             if leaf.type != 'Finish' and (finish_uncompleted or correct_leaves_num <= 3):
-                action = 'Finish'
+
 
                 if leaf.visits == 0:
                     value, simu_value = self.rollout(leaf, self.value_func_simulation if value_function is not None else self.direct_infer_simulation)
@@ -707,17 +557,10 @@ class MCTS:
                 action_class = self.actions['Finish']
                 sampling_params['max_tokens'] = 4096
                 step = action_class(leaf, self.model_server, few_shot=self.few_shot, first=self.training and self.first_round, direct_output=True, **sampling_params)
-                # step = self.step_llm_action(node, action, **sampling_params)
-                # reasoning_steps = self.model_server(prompt=[cur_prompt], **sampling_params)
+                
                 step = step[0]
                 final_node = self.process_answer_nodes(leaf, step, )
-                # if step is None: 
-                #     continue
-                # # step = reasoning_steps[0][0]
-                # new_node = MedMCTSNode(node.problem, step.strip(), 0, parent=leaf, type=action, ground_truth=node.ground_truth)
-                # leaf.add_child(new_node)
-                # value, simu_value = new_node.eval_node(value_function, training=self.training)
-                # # if simu_value == 1
+                
                 value = final_node.value
                 if abs(value - 1) < 1e-6:
                     correct_leaves_num += 1

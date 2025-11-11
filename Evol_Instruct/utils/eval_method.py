@@ -13,21 +13,11 @@ from Evol_Instruct.evaluation.eval_em import METRIC_FUNC_MAPPING
 def compute_dataset_with_method(data_path, method, n=-1):
     data = client.read(data_path)
     dataset_name = ""
-    # i = 1
-    # while dataset_name not in METRIC_FUNC_MAPPING:
-    #     dataset_name = data_path.split("/")[-i].replace(".jsonl", "")
-    #     i += 1
-    # metric = METRIC_FUNC_MAPPING[dataset_name]
+
     acc = 0
     for line in data:
         all_answer = line['all_answer']
-        # if dataset_name == 'medsins_task131':
-        #     mapping_list = ['Intraoperative rad with other rad before/after surgery', 'Intraoperative radiation', 'No radiation and/or cancer-directed surgery', 'Radiation after surgery', 'Radiation before and after surgery', 'Radiation prior to surgery', 'Surgery both before and after radiation']
-        #     for i in range(len(all_answer)):
-        #         if all_answer[i].isdigit():
-        #             all_answer[i] = mapping_list[int(all_answer[i]) - 1]
-        #         else:
-        #             all_answer[i] = all_answer[i].replace("''", "").replace('"', '')
+        
         
         all_answer = [(answer, score) for answer, score in all_answer if answer]
         if n != -1:
@@ -130,5 +120,3 @@ if __name__ == "__main__":
     acc = compute_dataset_with_method(args.data_path, args.method, args.n)
     acc_in_percent = acc * 100
     print(acc_in_percent)
-    # print(f"Accuracy with {args.method}: {acc_in_percent:.2f}%")
-        

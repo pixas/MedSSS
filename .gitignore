@@ -2,3 +2,4 @@ batchscript*
 wandb/
 slurm-1*
 logs/
+upload_to_hf.py

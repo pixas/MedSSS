@@ -1,0 +1,684 @@
+Warning: Failed to unmount /nvme/jiangshuyang/s3_mount
+bucket syj_new is mounted at /nvme/jiangshuyang/s3_mount
+Mounted /nvme/jiangshuyang/s3_mount successfully.
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  .../meds3_prm/tokenizer.json:  97%|█████████▋| 16.7MB / 17.2MB            [A[A
+
+  .../meds3_prm/tokenizer.json:  97%|█████████▋| 16.7MB / 17.2MB            [A[AProcessing Files (0 / 1)      :   9%|▉         | 16.7MB /  185MB,   ???B/s  
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[AProcessing Files (1 / 1)      :   9%|▉         | 17.2MB /  185MB, 2.33MB/s  
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   1%|          | 1.22MB /  168MB            [A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   1%|          | 1.22MB /  168MB            [A[A[AProcessing Files (1 / 2)      :  10%|▉         | 18.4MB /  185MB, 1.20MB/s  
+New Data Upload               :   2%|▏         | 1.22MB / 67.1MB,  870kB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   1%|          | 1.22MB /  168MB            [A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   1%|          | 1.83MB /  168MB            [A[A[AProcessing Files (1 / 2)      :  10%|█         | 19.0MB /  185MB, 1.27MB/s  
+New Data Upload               :   3%|▎         | 1.83MB / 67.1MB, 1.02MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   1%|          | 1.83MB /  168MB            [A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   1%|          | 1.83MB /  168MB            [A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   1%|▏         | 2.44MB /  168MB            [A[A[AProcessing Files (1 / 2)      :  11%|█         | 19.6MB /  185MB, 1.21MB/s  
+New Data Upload               :   4%|▎         | 2.44MB / 67.1MB, 1.02MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   2%|▏         | 3.05MB /  168MB            [A[A[AProcessing Files (1 / 2)      :  11%|█         | 20.3MB /  185MB, 1.35MB/s  
+New Data Upload               :   2%|▏         | 3.05MB /  134MB, 1.17MB/s  [A
+
+
+
+  ...ds3_prm/training_args.bin:   2%|▏         |   133B / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   3%|▎         | 5.49MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:   2%|▏         |   133B / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  12%|█▏        | 22.7MB /  185MB, 2.13MB/s  
+New Data Upload               :   3%|▎         | 5.49MB /  168MB, 1.96MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   5%|▍         | 7.93MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:   4%|▎         |   266B / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  14%|█▎        | 25.1MB /  185MB, 2.80MB/s  
+New Data Upload               :   5%|▍         | 7.93MB /  168MB, 2.64MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   5%|▌         | 9.15MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:   4%|▎         |   266B / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  14%|█▍        | 26.4MB /  185MB, 3.00MB/s  
+New Data Upload               :   5%|▌         | 9.15MB /  168MB, 2.86MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   7%|▋         | 11.0MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:   5%|▌         |   399B / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  15%|█▌        | 28.2MB /  185MB, 3.37MB/s  
+New Data Upload               :   7%|▋         | 11.0MB /  168MB, 3.23MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:   8%|▊         | 14.0MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:   5%|▌         |   399B / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  17%|█▋        | 31.2MB /  185MB, 4.03MB/s  
+New Data Upload               :   8%|▊         | 14.0MB /  168MB, 3.90MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  10%|▉         | 16.5MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:   5%|▌         |   399B / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  18%|█▊        | 33.7MB /  185MB, 4.46MB/s  
+New Data Upload               :  10%|▉         | 16.5MB /  168MB, 4.33MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  13%|█▎        | 21.3MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:   7%|▋         |   533B / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  21%|██        | 38.6MB /  185MB, 5.45MB/s  
+New Data Upload               :  13%|█▎        | 21.3MB /  168MB, 5.34MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  16%|█▋        | 27.4MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  11%|█         |   799B / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  24%|██▍       | 44.7MB /  185MB, 6.65MB/s  
+New Data Upload               :  16%|█▋        | 27.4MB /  168MB, 6.53MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  19%|█▉        | 32.3MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  16%|█▋        | 1.20kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  27%|██▋       | 49.5MB /  185MB, 7.45MB/s  
+New Data Upload               :  19%|█▉        | 32.3MB /  168MB, 7.35MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  22%|██▏       | 37.2MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  18%|█▊        | 1.33kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  29%|██▉       | 54.4MB /  185MB, 8.19MB/s  
+New Data Upload               :  22%|██▏       | 37.2MB /  168MB, 8.09MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  27%|██▋       | 44.5MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  24%|██▎       | 1.73kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  33%|███▎      | 61.7MB /  185MB, 9.38MB/s  
+New Data Upload               :  27%|██▋       | 44.5MB /  168MB, 9.28MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  31%|███       | 51.3MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  31%|███       | 2.27kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  37%|███▋      | 68.5MB /  185MB, 10.3MB/s  
+New Data Upload               :  31%|███       | 51.3MB /  168MB, 10.3MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  31%|███       | 51.3MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  31%|███       | 2.27kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  36%|███▌      | 59.8MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  38%|███▊      | 2.80kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  42%|████▏     | 77.0MB /  185MB, 11.2MB/s  
+New Data Upload               :  36%|███▌      | 59.8MB /  168MB, 11.1MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  37%|███▋      | 62.9MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  42%|████▏     | 3.07kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  43%|████▎     | 80.1MB /  185MB, 11.3MB/s  
+New Data Upload               :  37%|███▋      | 62.9MB /  168MB, 11.2MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  41%|████      | 69.0MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  51%|█████     | 3.73kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  47%|████▋     | 86.2MB /  185MB, 12.0MB/s  
+New Data Upload               :  41%|████      | 69.0MB /  168MB, 11.9MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  44%|████▍     | 74.5MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  56%|█████▌    | 4.13kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  50%|████▉     | 91.7MB /  185MB, 12.5MB/s  
+New Data Upload               :  44%|████▍     | 74.5MB /  168MB, 12.4MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  47%|████▋     | 78.7MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  62%|██████▏   | 4.53kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  52%|█████▏    | 95.9MB /  185MB, 12.8MB/s  
+New Data Upload               :  47%|████▋     | 78.7MB /  168MB, 12.7MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  50%|████▉     | 83.6MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  65%|██████▌   | 4.80kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  54%|█████▍    |  101MB /  185MB, 13.1MB/s  
+New Data Upload               :  50%|████▉     | 83.6MB /  168MB, 13.1MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  57%|█████▋    | 95.2MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  83%|████████▎ | 6.13kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  61%|██████    |  112MB /  185MB, 14.5MB/s  
+New Data Upload               :  57%|█████▋    | 95.2MB /  168MB, 14.4MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  62%|██████▏   |  104MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin:  94%|█████████▍| 6.93kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  66%|██████▌   |  122MB /  185MB, 15.4MB/s  
+New Data Upload               :  62%|██████▏   |  104MB /  168MB, 15.3MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  64%|██████▍   |  108MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|█████████▉| 7.33kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  68%|██████▊   |  125MB /  185MB, 15.5MB/s  
+New Data Upload               :  64%|██████▍   |  108MB /  168MB, 15.4MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  68%|██████▊   |  114MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|█████████▉| 7.33kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  71%|███████   |  131MB /  185MB, 15.9MB/s  
+New Data Upload               :  68%|██████▊   |  114MB /  168MB, 15.9MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  71%|███████   |  118MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|█████████▉| 7.33kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  73%|███████▎  |  136MB /  185MB, 16.1MB/s  
+New Data Upload               :  71%|███████   |  118MB /  168MB, 16.0MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  72%|███████▏  |  121MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|█████████▉| 7.33kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  75%|███████▍  |  139MB /  185MB, 16.0MB/s  
+New Data Upload               :  72%|███████▏  |  121MB /  168MB, 16.0MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  73%|███████▎  |  123MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|█████████▉| 7.33kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  76%|███████▌  |  141MB /  185MB, 15.9MB/s  
+New Data Upload               :  73%|███████▎  |  123MB /  168MB, 15.8MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  75%|███████▍  |  125MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|█████████▉| 7.33kB / 7.35kB            [A[A[A[AProcessing Files (1 / 3)      :  77%|███████▋  |  142MB /  185MB, 15.7MB/s  
+New Data Upload               :  75%|███████▍  |  125MB /  168MB, 15.6MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  77%|███████▋  |  129MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  79%|███████▉  |  147MB /  185MB, 15.8MB/s  
+New Data Upload               :  77%|███████▋  |  129MB /  168MB, 15.8MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  80%|███████▉  |  134MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  82%|████████▏ |  151MB /  185MB, 16.0MB/s  
+New Data Upload               :  80%|███████▉  |  134MB /  168MB, 15.9MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  81%|████████  |  136MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  83%|████████▎ |  153MB /  185MB, 15.9MB/s  
+New Data Upload               :  81%|████████  |  136MB /  168MB, 15.8MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  84%|████████▍ |  142MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  86%|████████▌ |  159MB /  185MB, 16.2MB/s  
+New Data Upload               :  84%|████████▍ |  142MB /  168MB, 16.1MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  85%|████████▌ |  143MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  87%|████████▋ |  160MB /  185MB, 15.9MB/s  
+New Data Upload               :  85%|████████▌ |  143MB /  168MB, 15.9MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  87%|████████▋ |  146MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  88%|████████▊ |  163MB /  185MB, 15.9MB/s  
+New Data Upload               :  87%|████████▋ |  146MB /  168MB, 15.9MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  88%|████████▊ |  148MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  90%|████████▉ |  166MB /  185MB, 15.8MB/s  
+New Data Upload               :  88%|████████▊ |  148MB /  168MB, 15.8MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  89%|████████▉ |  149MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  90%|████████▉ |  166MB /  185MB, 15.6MB/s  
+New Data Upload               :  89%|████████▉ |  149MB /  168MB, 15.5MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  90%|████████▉ |  150MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  90%|█████████ |  167MB /  185MB, 15.4MB/s  
+New Data Upload               :  90%|████████▉ |  150MB /  168MB, 15.3MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  91%|█████████ |  153MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  92%|█████████▏|  170MB /  185MB, 15.3MB/s  
+New Data Upload               :  91%|█████████ |  153MB /  168MB, 15.3MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  91%|█████████▏|  153MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  92%|█████████▏|  171MB /  185MB, 15.1MB/s  
+New Data Upload               :  91%|█████████▏|  153MB /  168MB, 15.0MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  92%|█████████▏|  155MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  93%|█████████▎|  172MB /  185MB, 15.2MB/s  
+New Data Upload               :  92%|█████████▏|  155MB /  168MB, 15.2MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  93%|█████████▎|  156MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  94%|█████████▍|  174MB /  185MB, 15.3MB/s  
+New Data Upload               :  93%|█████████▎|  156MB /  168MB, 15.3MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  94%|█████████▍|  158MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  95%|█████████▍|  175MB /  185MB, 15.5MB/s  
+New Data Upload               :  94%|█████████▍|  158MB /  168MB, 15.5MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  97%|█████████▋|  162MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  97%|█████████▋|  180MB /  185MB, 15.9MB/s  
+New Data Upload               :  97%|█████████▋|  163MB /  168MB, 15.9MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  98%|█████████▊|  165MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  98%|█████████▊|  182MB /  185MB, 16.2MB/s  
+New Data Upload               :  98%|█████████▊|  165MB /  168MB, 16.2MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors:  99%|█████████▉|  167MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      :  99%|█████████▉|  184MB /  185MB, 16.4MB/s  
+New Data Upload               :  99%|█████████▉|  167MB /  168MB, 16.4MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  167MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (2 / 3)      : 100%|█████████▉|  185MB /  185MB, 16.3MB/s  
+New Data Upload               : 100%|█████████▉|  167MB /  168MB, 16.3MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  167MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  167MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  167MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  167MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  167MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|█████████▉|  167MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (3 / 3)      : 100%|██████████|  185MB /  185MB, 15.9MB/s  
+New Data Upload               : 100%|██████████|  168MB /  168MB, 15.9MB/s  [A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[A
+
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            [A[A
+
+
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            [A[A[A
+
+
+
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            [A[A[A[AProcessing Files (3 / 3)      : 100%|██████████|  185MB /  185MB, 11.7MB/s  
+New Data Upload               : 100%|██████████|  168MB /  168MB, 11.7MB/s  
+  .../meds3_prm/tokenizer.json: 100%|██████████| 17.2MB / 17.2MB            
+  ...adapter_model.safetensors: 100%|██████████|  168MB /  168MB            
+  ...ds3_prm/training_args.bin: 100%|██████████| 7.35kB / 7.35kB            
+slurmstepd: error: *** JOB 6224905 ON SH-IDCA1404-10-140-54-16 CANCELLED AT 2025-11-11T13:08:27 ***
