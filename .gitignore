@@ -5,3 +5,5 @@ logs/
 upload_to_hf.py
 *.pyc
 __pycache__
+upload_file_to_hf.sh
+upload.log

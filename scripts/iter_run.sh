@@ -97,19 +97,17 @@ while [ ! -f "${SFT_MODEL_PATH}/tokenizer_config.json" ]; do
     sleep 60    
 done
 
-DPO_TRAINING_DATA=${SAVE_PATH}/sft_${iter}
-# combine over, begin sft training
+DPO_TRAINING_DATA=${SAVE_PATH}/sft_combined_${iter}
 DPO_CKPT=${CKPT}-DPO-full-ITER${iter}-ls
-# DPO_CKPT=${CKPT}-DPO-full-ITER${iter}-ls-only2
 DPO_MODEL_PATH=${BASE_PATH}/checkpoints/${DPO_TRAINING_DATA}-${DPO_CKPT}
-# model_base=
+
 DPO_LOGS_BASE=./logs/${DPO_TRAINING_DATA}/${DPO_CKPT}
 mkdir -p ${DPO_LOGS_BASE}
 LOGS_FILE=${DPO_LOGS_BASE}/train.log
 
 
 if [ ! -f "${DPO_MODEL_PATH}/tokenizer_config.json" ]; then
-    sbatch -o $LOGS_FILE scripts/slurm/dpo_train.sh $oss_path/${TRAINING_DATA}.json $SFT_MODEL_PATH ${DPO_MODEL_PATH} "None" "--use_peft --learning_rate 1e-6 --num_train_epochs 1 --test_split_ratio 0.01 --data_process_method ls" 
+    sbatch -o $LOGS_FILE scripts/slurm/dpo_train.sh $oss_path/${TRAINING_DATA}.json $SFT_MODEL_PATH ${DPO_MODEL_PATH} "None" " --learning_rate 5e-7 --num_train_epochs 1 --test_split_ratio 0.01 --data_process_method ls" 
 fi 
 
 # waiting for the dpo training over

@@ -30,13 +30,13 @@ job_id=$(sbatch -w $head_node --quotatype=${quotatype} -o upload.log /mnt/petrel
 # bash /mnt/petrelfs/jiangshuyang/s3mount.sh &
 # srun bash /mnt/petrelfs/jiangshuyang/s3mount.sh
 # echo "Submitted job ID: $job_id"
-sleep 10
+sleep 5
 
 # ls /nvme/jiangshuyang/s3_mount
 # ls /mnt/petrelfs/jiangshuyang/s3_mount
 # srun python test.py
 source_dir="$1"
 target_dir="$2"
-srun python -m Evol_Instruct.utils.upload_to_hf
+srun python -m upload_to_hf
 
 scancel $job_id

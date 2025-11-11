@@ -55,7 +55,7 @@ def set_tokenizer(tokenizer):
 def mcts_generate(args, server, items, **kwargs):
 
     config = kwargs.pop("config")
-    # lora_request = kwargs.pop("lora_request", None)
+
     value_function = kwargs.pop("value_function", None)
     item = items[0]
     # if args.repeat_try >= 1:
